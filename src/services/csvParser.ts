@@ -17,6 +17,7 @@ export const parseCSVService = <T = GeneRecord>(
     skipEmptyLines: true,
     delimiter: delimiter,
     worker: true,
+    chunkSize: 500 * 1024, // 500KB
     chunk: (results, parser) => {
       const sanitizedData = results.data.map((row: any) => {
         const sanitizedRow: any = {};
