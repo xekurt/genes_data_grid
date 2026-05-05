@@ -10,7 +10,7 @@ export default defineConfig({
   },
   plugins: [pluginReact()],
   html: {
-    title: 'Rsbuild + Mantine + MRT',
+    title: 'GeneStream Parser',
   },
   // Optional but recommended: Path aliases make importing components cleaner
 });
