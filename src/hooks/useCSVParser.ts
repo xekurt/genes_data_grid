@@ -1,31 +1,31 @@
 import { useState, useCallback, useRef } from 'react';
 import { parseCSVService } from '../services/csvParser';
 import type { GeneRecord, CSVParseCallbacks } from '../types/csv';
-
+import { useDomainStore } from '../store/useDomainStore';
 
 interface UseCSVParserReturn<T> {
-  data: T[];
-  isLoading: boolean;
   error: Error | null;
   totalRows: number;
   parse: () => void;
   reset: () => void;
 }
 
-export const useCSVParser = <T = GeneRecord>(
+export const useCSVParser = <T extends Record<string, unknown> = GeneRecord>(
   url: string,
-  options?: Partial<CSVParseCallbacks<T>>
+  options?: Partial<CSVParseCallbacks<T>>,
 ): UseCSVParserReturn<T> => {
-  const [data, setData] = useState<T[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [totalRows, setTotalRows] = useState(0);
-  
+
   const isParsing = useRef(false);
+  const optionsRef = useRef(options);
+  
+  // Keep optionsRef up to date without triggering re-renders
+  optionsRef.current = options;
 
   const reset = useCallback(() => {
-    setData([]);
-    setIsLoading(false);
+    useDomainStore.getState().setGeneData([]);
+    useDomainStore.getState().setIsDataLoading(false);
     setError(null);
     setTotalRows(0);
     isParsing.current = false;
@@ -33,43 +33,44 @@ export const useCSVParser = <T = GeneRecord>(
 
   const parse = useCallback(() => {
     if (isParsing.current) return;
-    
+
     reset();
-    setIsLoading(true);
+    useDomainStore.getState().setIsDataLoading(true);
     isParsing.current = true;
+
+    let accumulatedData: T[] = [];
 
     parseCSVService<T>(url, {
       onChunk: (chunk, parser) => {
-        setData((prevData) => [...prevData, ...chunk]);
+        accumulatedData = [...accumulatedData, ...chunk];
         setTotalRows((prevCount) => prevCount + chunk.length);
-        
-        if (options?.onChunk) {
-          options.onChunk(chunk, parser);
+
+        if (optionsRef.current?.onChunk) {
+          optionsRef.current.onChunk(chunk, parser);
         }
       },
       onComplete: (results) => {
-        setIsLoading(false);
+        useDomainStore.getState().setGeneData(accumulatedData as unknown as GeneRecord[]);
+        useDomainStore.getState().setIsDataLoading(false);
         isParsing.current = false;
-        
-        if (options?.onComplete) {
-          options.onComplete(results);
+
+        if (optionsRef.current?.onComplete) {
+          optionsRef.current.onComplete(results);
         }
       },
       onError: (err) => {
         setError(err);
-        setIsLoading(false);
+        useDomainStore.getState().setIsDataLoading(false);
         isParsing.current = false;
-        
-        if (options?.onError) {
-          options.onError(err);
+
+        if (optionsRef.current?.onError) {
+          optionsRef.current.onError(err);
         }
       },
     });
-  }, [url, options, reset]);
+  }, [url, reset]);
 
   return {
-    data,
-    isLoading,
     error,
     totalRows,
     parse,
