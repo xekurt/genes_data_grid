@@ -53,7 +53,6 @@ export const GeneTable = ({ isExpLoading, onVisibleIdsChange }: GeneTableProps) 
           columns={columns}
           data={geneData}
           isLoading={isDataLoading || isExpLoading}
-          maxHeight="100%"
           onVisibleIdsChange={onVisibleIdsChange}
           mantinePaperProps={{
             style: { display: 'flex', flexDirection: 'column', height: '100%' }

@@ -34,7 +34,7 @@ const DataTableComponent = <T extends MRT_RowData>({
   columns,
   data,
   isLoading,
-  maxHeight = '700px',
+  maxHeight = 'calc(100vh - 250px)',
   onVisibleIdsChange,
   enableURLState = true,
   ...rest
@@ -196,7 +196,7 @@ const DataTableComponent = <T extends MRT_RowData>({
     onVisibleIdsChange?.(debouncedVisibleIds);
   }, [debouncedVisibleIds, onVisibleIdsChange]);
 
-  return <MantineReactTable  table={table} />;
+  return <MantineReactTable table={table} />;
 };
 
 export const DataTable = memo(DataTableComponent) as typeof DataTableComponent;

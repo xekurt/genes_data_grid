@@ -36,7 +36,7 @@ export const GeneDataDashboard = () => {
       )}
 
       {geneData.length > 0 && (
-        <Grid style={{ flex: 1, minHeight: 0, overflow: 'hidden', padding: 8 }} gutter={8} columns={12}>
+        <Grid style={{ flex: 1, minHeight: 0, overflow: 'hidden' }} gutter={8} columns={12}>
           <Grid.Col span={{ base: 12, md: 8 }} style={{ display: 'flex', flexDirection: 'column' }}>
             <GeneTable 
               isExpLoading={isExpLoading} 
