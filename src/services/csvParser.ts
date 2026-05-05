@@ -4,13 +4,12 @@ import type { GeneRecord, CSVParseCallbacks } from '../types/csv';
 
 export type { GeneRecord, CSVParseCallbacks };
 
-
-export const parseCSVService = <T = GeneRecord>(
+export const parseCSVService = <T extends Record<string, unknown>>(
   url: string,
   callbacks: CSVParseCallbacks<T>,
-  delimiter: string = ';'
+  delimiter: string = ';',
 ) => {
-  Papa.parse<any>(url, {
+  Papa.parse<T>(url, {
     download: true,
     header: true,
     dynamicTyping: true,
@@ -19,10 +18,12 @@ export const parseCSVService = <T = GeneRecord>(
     worker: true,
     chunkSize: 500 * 1024, // 500KB
     chunk: (results, parser) => {
-      const sanitizedData = results.data.map((row: any) => {
-        const sanitizedRow: any = {};
-        for (const key in row) {
-          sanitizedRow[sanitizeHeader(key)] = row[key];
+      const sanitizedData = results.data.map((row) => {
+        const sanitizedRow = {} as Record<string, unknown>;
+        for (const key in row as Record<string, unknown>) {
+          sanitizedRow[sanitizeHeader(key)] = (row as Record<string, unknown>)[
+            key
+          ];
         }
         return sanitizedRow as T;
       });
@@ -43,5 +44,3 @@ export const parseCSVService = <T = GeneRecord>(
     },
   });
 };
-
-
