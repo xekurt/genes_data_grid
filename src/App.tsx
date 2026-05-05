@@ -14,8 +14,8 @@ const App = () => {
     <Box bg="gray.0" style={{ minHeight: '100vh' }}>
       <Container size="xxl" py="xl">
         <Stack>
-          
           <Group>
+
             <ThemeIcon
               size="xl"
               radius="md"
@@ -25,11 +25,11 @@ const App = () => {
               <IconDna size={28} />
             </ThemeIcon>
             <Title order={1} fw={900} style={{ letterSpacing: '-1px' }}>
-              GeneStream Parser
+              Bio
             </Title>
+             
           </Group> 
           <GeneDataDashboard />
-          
         </Stack>
       </Container>
     </Box>
