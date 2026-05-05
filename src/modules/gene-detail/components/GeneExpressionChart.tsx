@@ -32,7 +32,7 @@ export const GeneExpressionChart = ({ gene, addedTissues, expressionDataMap }: G
       trigger: 'axis',
       axisPointer: { type: 'shadow' }
     },
-    grid: { left: '3%', right: '4%', bottom: '15%', containLabel: true },
+    grid: { top: 30, left: 10, right: 10, bottom: 20, containLabel: true },
     xAxis: {
       type: 'category',
       data: chartData.map(d => d.label),

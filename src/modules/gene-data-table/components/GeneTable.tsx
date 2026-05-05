@@ -46,24 +46,28 @@ export const GeneTable = ({ isExpLoading, onVisibleIdsChange }: GeneTableProps) 
   );
 
   return (
-    <Paper withBorder radius="lg" shadow="xs">
-      <DataTable
-        columns={columns}
-        data={geneData}
-        isLoading={isDataLoading || isExpLoading}
-        maxHeight="60vh"
-        onVisibleIdsChange={onVisibleIdsChange}
-        mantineTableBodyRowProps={({ row }) => ({
-          onClick: () => useUIStore.getState().setSelectedGeneId(row.original.ensembl),
-          style: {
-            cursor: 'pointer',
-          },
-        })}
-      />
-      <Box p="sm" ta="center" bg="gray.0">
+    <Paper withBorder radius="sm" shadow="xs" h="100%" style={{ display: 'flex', flexDirection: 'column' }}>
+      <Box style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+        <DataTable
+          columns={columns}
+          data={geneData}
+          isLoading={isDataLoading || isExpLoading}
+          maxHeight="100%"
+          onVisibleIdsChange={onVisibleIdsChange}
+          mantineTableContainerProps={{
+            style: { flex: 1, minHeight: 0 }
+          }}
+          mantineTableBodyRowProps={({ row }) => ({
+            onClick: () => useUIStore.getState().setSelectedGeneId(row.original.ensembl),
+            style: {
+              cursor: 'pointer',
+            },
+          })}
+        />
+      </Box>
+      <Box p="xs" ta="center" bg="gray.0" style={{ borderTop: '1px solid var(--mantine-color-gray-3)' }}>
         <Text size="xs" c="dimmed">
-          Virtualization active: {geneData.length.toLocaleString()} rows
-          rendered with 60fps performance.
+          Virtualization active: {geneData.length.toLocaleString()} rows rendered with 60fps performance.
         </Text>
       </Box>
     </Paper>

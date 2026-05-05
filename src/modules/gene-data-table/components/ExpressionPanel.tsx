@@ -33,7 +33,7 @@ export const ExpressionPanel = ({ isExpLoading }: ExpressionPanelProps) => {
   }, []);
 
   return (
-    <>
+    <Group gap="md" align="center">
       <Group gap="xs">
         <Select
           placeholder="Add Tissue Expression (GTEx)"
@@ -43,63 +43,60 @@ export const ExpressionPanel = ({ isExpLoading }: ExpressionPanelProps) => {
             disabled: addedTissues.some((at) => at.tissueSiteDetailId === t.tissueSiteDetailId),
           }))}
           searchable
-          size="sm"
-          radius="md"
-          w={250}
+          size="xs"
+          radius="sm"
+          w={220}
           value={selectedTissue}
           onChange={setSelectedTissue}
-          leftSection={<IconFlask size={16} />}
+          leftSection={<IconFlask size={14} />}
           disabled={isExpLoading}
         />
         <Tooltip label="Add as dynamic column">
           <ActionIcon
             variant="filled"
             color="indigo"
-            size="lg"
-            radius="md"
+            size="md"
+            radius="sm"
             onClick={handleAddExpression}
             loading={isExpLoading}
             disabled={!selectedTissue}
           >
-            <IconPlus size={20} />
+            <IconPlus size={16} />
           </ActionIcon>
         </Tooltip>
       </Group>
 
       {addedTissues.length > 0 && (
-        <>
-          <Divider my="lg" label="Dynamic Columns" labelPosition="center" />
-          <Group gap="xs">
-            {addedTissues.map((t) => (
-              <Badge
-                key={t.tissueSiteDetailId}
-                variant="outline"
-                color="gray"
-                size="lg"
-                radius="md"
-                rightSection={
-                  <IconX
-                    size={14}
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => handleRemoveTissue(t.tissueSiteDetailId)}
-                  />
-                }
-                styles={{ section: { marginLeft: '8px' } }}
-                leftSection={
-                  <Box
-                    w={8}
-                    h={8}
-                    bg={`#${t.colorHex}`}
-                    style={{ borderRadius: '50%' }}
-                  />
-                }
-              >
-                {t.tissueSiteDetail}
-              </Badge>
-            ))}
-          </Group>
-        </>
+        <Group gap="xs">
+          {addedTissues.map((t) => (
+            <Badge
+              key={t.tissueSiteDetailId}
+              variant="outline"
+              color="gray"
+              size="md"
+              radius="sm"
+              rightSection={
+                <IconX
+                  size={12}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => handleRemoveTissue(t.tissueSiteDetailId)}
+                />
+              }
+              styles={{ section: { marginLeft: '6px' } }}
+              leftSection={
+                <Box
+                  w={6}
+                  h={6}
+                  bg={`#${t.colorHex}`}
+                  style={{ borderRadius: '50%' }}
+                />
+              }
+            >
+              {t.tissueSiteDetail}
+            </Badge>
+          ))}
+        </Group>
       )}
-    </>
+    </Group>
   );
 };

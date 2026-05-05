@@ -1,5 +1,4 @@
-
-import { Group, Stack, Text, Badge, Loader, Paper } from '@mantine/core';
+import { Group, Text, Badge, Loader } from '@mantine/core';
 import { IconCheck, IconAlertCircle } from '@tabler/icons-react';
 
 interface StatusPanelProps {
@@ -11,52 +10,46 @@ interface StatusPanelProps {
 
 export const StatusPanel = ({ totalRows, isCSVLoading, error, hasData }: StatusPanelProps) => {
   return (
-    <Paper withBorder p="xl" radius="lg" shadow="sm">
-      <Group justify="space-between" align="flex-start">
-        <Stack gap={4}>
-          <Text size="lg" fw={700}>
-            Live GTEx Expression Data
-          </Text>
-          <Text size="sm" c="dimmed">
-            Showing live expression data for visible genes in the table.
-          </Text>
-        </Stack>
+    <Group justify="space-between" align="center" px="md" py="sm" style={{ borderBottom: '1px solid var(--mantine-color-gray-3)' }}>
+      <Group gap="md" align="center">
+        <Text size="md" fw={700} tt="uppercase" lts={1}>
+          Live GTEx Expression Data
+        </Text>
+        <Text size="sm" c="dimmed">
+          Showing live expression data for visible genes in the table.
+        </Text>
       </Group>
 
-      <Group mt="xl" justify="space-between">
-        {error ? (
+      {error ? (
+        <Badge
+          color="red"
+          variant="filled"
+          leftSection={<IconAlertCircle size={14} />}
+          radius="sm"
+        >
+          Parsing Error: {error.message}
+        </Badge>
+      ) : (
+        <Group gap="xs" align="center">
+          {isCSVLoading && (
+            <Group gap="xs">
+              <Loader size="xs" type="dots" />
+              <Text size="xs" c="blue" fw={500}>
+                Processing Worker Thread...
+              </Text>
+            </Group>
+          )}
           <Badge
-            color="red"
-            variant="filled"
-            leftSection={<IconAlertCircle size={14} />}
-            p="md"
+            size="md"
+            color={hasData ? 'green' : 'gray'}
+            variant="light"
+            leftSection={hasData ? <IconCheck size={14} /> : null}
             radius="sm"
           >
-            Parsing Error: {error.message}
+            {totalRows.toLocaleString()} Records Streamed
           </Badge>
-        ) : (
-          <Group gap="md">
-            <Badge
-              size="lg"
-              color={hasData ? 'green' : 'gray'}
-              variant="light"
-              leftSection={hasData ? <IconCheck size={16} /> : null}
-              radius="md"
-              px="md"
-            >
-              {totalRows.toLocaleString()} Records Streamed
-            </Badge>
-            {isCSVLoading && (
-              <Group gap="xs">
-                <Loader size="sm" type="dots" />
-                <Text size="xs" c="blue" fw={500}>
-                  Processing Worker Thread...
-                </Text>
-              </Group>
-            )}
-          </Group>
-        )}
-      </Group>
-    </Paper>
+        </Group>
+      )}
+    </Group>
   );
 };

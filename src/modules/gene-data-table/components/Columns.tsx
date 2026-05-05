@@ -64,7 +64,7 @@ export const getGeneColumns = (
   {
     accessorKey: 'biotype',
     header: 'Biotype',
-    size: 180,
+    size: 200,
     Header: () => (
       <Stack gap={0}>
         <Text size="xs" fw={700}>
@@ -76,14 +76,14 @@ export const getGeneColumns = (
     Cell: ({ cell }) => {
       const val = cell.getValue<string>();
       return (
-        <Group gap="xs" wrap="nowrap">
+        <Group gap="xs" wrap="nowrap" align="flex-start">
           <Box
             w={8}
             h={8}
             bg={getCategoryColor(val)}
-            style={{ borderRadius: '2px' }}
+            style={{ borderRadius: '2px', marginTop: '6px' }}
           />
-          <Text size="xs" c="dimmed">
+          <Text size="xs" c="dimmed" style={{ whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: 1.2 }}>
             {val}
           </Text>
         </Group>
@@ -93,7 +93,13 @@ export const getGeneColumns = (
   {
     accessorKey: 'name',
     header: 'Name',
-    size: 250,
+    size: 350,
+    minSize: 200,
+    Cell: ({ cell }) => (
+      <Text size="sm" style={{ whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: 1.3 }}>
+        {cell.getValue<string>()}
+      </Text>
+    ),
   },
   ...dynamicColumns.map((col) => ({
     id: `expr_${col.id}`,

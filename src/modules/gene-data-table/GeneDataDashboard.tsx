@@ -3,7 +3,7 @@ import { GeneDetailView } from '../gene-detail/GeneDetailView';
 import { StatusPanel } from './components/StatusPanel';
 import { ExpressionPanel } from './components/ExpressionPanel';
 import { GeneTable } from './components/GeneTable';
-import { Grid, Paper, Stack } from '@mantine/core';
+import { Grid, Group, Paper, Stack } from '@mantine/core';
 import { useDomainStore } from '../../store/useDomainStore';
 import { useExpressionStore } from '../../store/useExpressionStore';
 import { useCSVParser } from '../../hooks/useCSVParser';
@@ -30,7 +30,7 @@ export const GeneDataDashboard = () => {
   }, []);
 
   return (
-    <Stack gap="xl">
+    <Stack gap="sm" h="100vh" style={{ overflow: 'hidden', backgroundColor: 'var(--mantine-color-gray-0)' }}>
       <StatusPanel 
         totalRows={totalRows} 
         isCSVLoading={isDataLoading} 
@@ -39,20 +39,20 @@ export const GeneDataDashboard = () => {
       />
 
       {geneData.length > 0 && (
-        <Paper withBorder p="xl" radius="lg" shadow="sm">
+        <Group px="md">
           <ExpressionPanel isExpLoading={isExpLoading} />
-        </Paper>
+        </Group>
       )}
 
       {geneData.length > 0 && (
-        <Grid>
-          <Grid.Col span={{ base: 12, md: 8 }}>
+        <Grid style={{ flex: 1, minHeight: 0, overflow: 'hidden' }} px="md" pb="md" m={0} columns={12}>
+          <Grid.Col span={{ base: 12, md: 8 }} style={{ display: 'flex', flexDirection: 'column', padding: 0, paddingRight: '8px' }}>
             <GeneTable 
               isExpLoading={isExpLoading} 
               onVisibleIdsChange={handleVisibleIdsChange} 
             />
           </Grid.Col>
-          <Grid.Col span={{ base: 12, md: 4 }}>
+          <Grid.Col span={{ base: 12, md: 4 }} style={{ display: 'flex', flexDirection: 'column', padding: 0, paddingLeft: '8px' }}>
             <GeneDetailView addedTissues={addedTissues} />
           </Grid.Col>
         </Grid>

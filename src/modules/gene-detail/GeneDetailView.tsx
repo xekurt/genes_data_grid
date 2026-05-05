@@ -30,26 +30,26 @@ export const GeneDetailView = ({ addedTissues }: GeneDetailViewProps) => {
   }
 
   return (
-    <Paper withBorder p="xl" radius="lg" shadow="sm" h="100%" style={{ display: 'flex', flexDirection: 'column' }}>
-      <Stack gap="md" style={{ flex: 1, minHeight: 0 }}>
+    <Paper withBorder p="xs" radius="sm" shadow="xs" h="100%" style={{ display: 'flex', flexDirection: 'column' }}>
+      <Stack gap="xs" style={{ flex: 1, minHeight: 0 }}>
         
         <GeneDetailHeader gene={gene as any} />
 
-        <Tabs defaultValue="expression" keepMounted={false} style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }} mt="xs">
+        <Tabs defaultValue="expression" keepMounted={false} style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }} mt="0">
           <Tabs.List>
-            <Tabs.Tab value="expression" leftSection={<IconChartBar size={16} />}>
+            <Tabs.Tab value="expression" leftSection={<IconChartBar size={14} />}>
               Expression
             </Tabs.Tab>
-            <Tabs.Tab value="annotation" leftSection={<IconDna size={16} />}>
+            <Tabs.Tab value="annotation" leftSection={<IconDna size={14} />}>
               Annotation
             </Tabs.Tab>
           </Tabs.List>
 
-          <Tabs.Panel value="expression" pt="md" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <Tabs.Panel value="expression" pt="xs" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <GeneExpressionChart gene={gene as any} addedTissues={addedTissues} expressionDataMap={expressionDataMap} />
           </Tabs.Panel>
 
-          <Tabs.Panel value="annotation" pt="md" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <Tabs.Panel value="annotation" pt="xs" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <GeneAnnotationTrack gene={gene as any} />
           </Tabs.Panel>
         </Tabs>
