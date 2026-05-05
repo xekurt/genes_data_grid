@@ -4,8 +4,8 @@ import App from './App';
 import '@mantine/core/styles.css';
 import '@mantine/dates/styles.css';
 import 'mantine-react-table/styles.css';
+import './App.css';
 import { MantineProvider } from '@mantine/core';
-
 
 const rootEl = document.getElementById('root');
 if (rootEl) {
