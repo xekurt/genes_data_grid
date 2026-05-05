@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { GeneDetailView } from '../gene-detail/GeneDetailView';
 import { ExpressionPanel } from './components/ExpressionPanel';
 import { GeneTable } from './components/GeneTable';
-import { Grid, Group, Paper, Stack } from '@mantine/core';
+import { Grid, Group, Stack } from '@mantine/core';
 import { useDomainStore } from '../../store/useDomainStore';
 import { useExpressionStore } from '../../store/useExpressionStore';
 import { useCSVParser } from '../../hooks/useCSVParser';
@@ -44,7 +44,7 @@ export const GeneDataDashboard = () => {
             />
           </Grid.Col>
           <Grid.Col span={{ base: 12, md: 4 }} style={{ display: 'flex', flexDirection: 'column' }}>
-            <GeneDetailView addedTissues={addedTissues} />
+            <GeneDetailView />
           </Grid.Col>
         </Grid>
       )}
