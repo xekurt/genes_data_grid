@@ -3,21 +3,14 @@ import { IconChartBar, IconDna } from '@tabler/icons-react';
 
 import { useUIStore } from '../../store/useUIStore';
 import { useDomainStore } from '../../store/useDomainStore';
-import { useExpressionStore } from '../../store/useExpressionStore';
-import type { TissueInfo } from '../../types/tissue';
 
 import { GeneDetailHeader } from './components/GeneDetailHeader';
-import { GeneExpressionChart } from './components/GeneExpressionChart';
+import { ExpressionDistributionPlot } from './components/ExpressionDistributionPlot';
 import { GeneAnnotationTrack } from './components/GeneAnnotationTrack';
 
-interface GeneDetailViewProps {
-  addedTissues: TissueInfo[];
-}
-
-export const GeneDetailView = ({ addedTissues }: GeneDetailViewProps) => {
+export const GeneDetailView = () => {
   const selectedGeneId = useUIStore((state) => state.selectedGeneId);
   const geneData = useDomainStore((state) => state.geneData);
-  const expressionDataMap = useExpressionStore((state) => state.expressionDataMap);
 
   const gene = geneData.find((g) => g.ensembl === selectedGeneId) || null;
 
@@ -46,7 +39,7 @@ export const GeneDetailView = ({ addedTissues }: GeneDetailViewProps) => {
           </Tabs.List>
 
           <Tabs.Panel value="expression" pt="xs" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <GeneExpressionChart gene={gene as any} addedTissues={addedTissues} expressionDataMap={expressionDataMap} />
+            <ExpressionDistributionPlot />
           </Tabs.Panel>
 
           <Tabs.Panel value="annotation" pt="xs" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
