@@ -15,6 +15,7 @@ export const GeneTable = ({ isExpLoading, onVisibleIdsChange }: GeneTableProps) 
   const geneData = useDomainStore((state) => state.geneData);
   const isDataLoading = useDomainStore((state) => state.isDataLoading);
   const addedTissues = useExpressionStore((state) => state.addedTissues);
+  const selectedGeneId = useUIStore((state) => state.selectedGeneId);
 
   const _columnDistribution = useMemo(() => {
     const biotypeCounts: Record<string, number> = {};
@@ -54,15 +55,25 @@ export const GeneTable = ({ isExpLoading, onVisibleIdsChange }: GeneTableProps) 
           isLoading={isDataLoading || isExpLoading}
           maxHeight="100%"
           onVisibleIdsChange={onVisibleIdsChange}
+          mantinePaperProps={{
+            style: { display: 'flex', flexDirection: 'column', height: '100%' }
+          }}
           mantineTableContainerProps={{
             style: { flex: 1, minHeight: 0 }
           }}
-          mantineTableBodyRowProps={({ row }) => ({
-            onClick: () => useUIStore.getState().setSelectedGeneId(row.original.ensembl),
-            style: {
-              cursor: 'pointer',
-            },
-          })}
+          mantineTableBodyRowProps={({ row }) => {
+            const isSelected = row.original.ensembl === selectedGeneId;
+            return {
+              onClick: () => useUIStore.getState().setSelectedGeneId(row.original.ensembl),
+              style: {
+                cursor: 'pointer',
+                ...(isSelected ? {
+                  boxShadow: 'inset 0 0 0 2px var(--mantine-color-blue-filled)',
+                  backgroundColor: 'var(--mantine-color-blue-light)'
+                } : {})
+              },
+            };
+          }}
         />
       </Box>
       <Box p="xs" ta="center" bg="gray.0" style={{ borderTop: '1px solid var(--mantine-color-gray-3)' }}>

@@ -23,14 +23,14 @@ export const GeneDetailView = ({ addedTissues }: GeneDetailViewProps) => {
 
   if (!gene) {
     return (
-      <Paper withBorder p="xl" radius="lg" shadow="sm" h="100%" display="flex" style={{ alignItems: 'center', justifyContent: 'center' }}>
+      <Paper withBorder p="xl" radius="sm" shadow="sm" h="100%" display="flex" style={{ alignItems: 'center', justifyContent: 'center' }}>
         <Text c="dimmed">Select a gene from the table to view details</Text>
       </Paper>
     );
   }
 
   return (
-    <Paper withBorder p="xs" radius="sm" shadow="xs" h="100%" style={{ display: 'flex', flexDirection: 'column' }}>
+    <Paper withBorder radius="sm" p="xs" shadow="xs" h="100%" style={{ display: 'flex', flexDirection: 'column', borderRadius: 'none' }}>
       <Stack gap="xs" style={{ flex: 1, minHeight: 0 }}>
         
         <GeneDetailHeader gene={gene as any} />
