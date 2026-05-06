@@ -20,7 +20,7 @@ export const GeneDataDashboard = () => {
   
   const [visibleIds, setVisibleIds] = useState<string[]>([]);
 
-  const { isExpLoading } = useJITExpression(visibleIds, addedTissues);
+  const { isExpLoading, loadingTissueIds } = useJITExpression(visibleIds, addedTissues);
   
   useEffect(() => {
     
@@ -46,6 +46,7 @@ export const GeneDataDashboard = () => {
           <Grid.Col span={{ base: 12, md: 8 }} style={{ display: 'flex', flexDirection: 'column' }}>
             <GeneTable 
               isExpLoading={isExpLoading} 
+              loadingTissueIds={loadingTissueIds}
               onVisibleIdsChange={handleVisibleIdsChange} 
             />
           </Grid.Col>
