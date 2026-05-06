@@ -8,11 +8,9 @@ import type { TissueInfo } from '@/types/tissue';
 export const useJITExpression = (visibleIds: string[], addedTissues: TissueInfo[]) => {
   const [loadingTissueIds, setLoadingTissueIds] = useState<Set<string>>(new Set());
   
-  // Get store actions and state
+  // Actions are stable and won't trigger re-runs
   const setExpressionData = useExpressionStore(state => state.setExpressionData);
-  const expressionDataMap = useExpressionStore(state => state.expressionDataMap);
-  const ensemblToGencode = useMappingStore(state => state.ensemblToGencode);
-  const setVersionMapping = useMappingStore(state => state.setVersionMapping);
+  const setVersionMappings = useMappingStore(state => state.setVersionMappings);
 
   const fetchingRef = useRef<Record<string, Set<string>>>({});
   const isExpLoading = loadingTissueIds.size > 0;
@@ -23,11 +21,14 @@ export const useJITExpression = (visibleIds: string[], addedTissues: TissueInfo[
     const controller = new AbortController();
 
     const fetchMissingData = async () => {
+      const currentExpressionMap = useExpressionStore.getState().expressionDataMap;
+      const currentMappings = new Map(useMappingStore.getState().ensemblToGencode);
+
       const tasks: { tissueId: string; missingEnsemblIds: string[] }[] = [];
 
       addedTissues.forEach(tissue => {
         const tissueId = tissue.tissueSiteDetailId;
-        const currentMap = expressionDataMap[tissueId] || {};
+        const currentMap = currentExpressionMap[tissueId] || {};
         const inFlight = fetchingRef.current[tissueId] || new Set();
         
         const missing = visibleIds.filter(id => 
@@ -54,30 +55,25 @@ export const useJITExpression = (visibleIds: string[], addedTissues: TissueInfo[
       });
 
       try {
-        // Create a local map of all current mappings to avoid getState calls
-        const currentMappings = new Map(ensemblToGencode);
-
-        // 1. Resolve any unknown Ensembl -> Gencode mappings
+        
         const allMissingEnsemblIds = Array.from(new Set(tasks.flatMap(t => t.missingEnsemblIds)));
         const unknownEnsemblIds = allMissingEnsemblIds.filter(id => !currentMappings.has(id));
         
         if (unknownEnsemblIds.length > 0) {
           const newMappings = await fetchGencodeMappings(unknownEnsemblIds, controller.signal);
-          Object.entries(newMappings).forEach(([unversioned, versioned]) => {
-            setVersionMapping(unversioned, versioned);
-            currentMappings.set(unversioned, versioned);
-          });
           
-          // Mark IDs that couldn't be resolved to avoid re-fetching
+          
+          const mappingsToStore: Record<string, string> = {};
           unknownEnsemblIds.forEach(id => {
-            if (!currentMappings.has(id)) {
-              setVersionMapping(id, '');
-              currentMappings.set(id, '');
-            }
+            const versioned = newMappings[id] || '';
+            mappingsToStore[id] = versioned;
+            currentMappings.set(id, versioned);
           });
+
+          setVersionMappings(mappingsToStore);
         }
 
-        // 2. Fetch expression data for each task
+        
         await Promise.all(
           tasks.map(async ({ tissueId, missingEnsemblIds }) => {
             const gencodeIdsToFetch: string[] = [];
@@ -92,7 +88,6 @@ export const useJITExpression = (visibleIds: string[], addedTissues: TissueInfo[
             });
 
             if (gencodeIdsToFetch.length === 0) {
-              // All missing IDs were unmappable
               const updateMap: Record<string, number | null> = {};
               missingEnsemblIds.forEach(id => { updateMap[id] = null; });
               setExpressionData(tissueId, updateMap);
@@ -140,7 +135,7 @@ export const useJITExpression = (visibleIds: string[], addedTissues: TissueInfo[
     return () => {
       controller.abort();
     };
-  }, [visibleIds, addedTissues, expressionDataMap, ensemblToGencode, setExpressionData, setVersionMapping]);
+  }, [visibleIds, addedTissues, setExpressionData, setVersionMappings]);
 
   return { isExpLoading, loadingTissueIds };
 };
