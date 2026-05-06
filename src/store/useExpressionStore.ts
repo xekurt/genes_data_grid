@@ -2,9 +2,9 @@ import { create } from 'zustand';
 import type { TissueInfo } from '../types/tissue';
 
 interface ExpressionState {
-  expressionDataMap: Record<string, Record<string, number>>;
+  expressionDataMap: Record<string, Record<string, number | null>>;
   addedTissues: TissueInfo[];
-  setExpressionData: (tissueId: string, data: Record<string, number>) => void;
+  setExpressionData: (tissueId: string, data: Record<string, number | null>) => void;
   addTissue: (tissue: TissueInfo) => void;
   removeTissue: (tissueId: string) => void;
 }
