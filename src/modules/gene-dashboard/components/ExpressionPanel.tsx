@@ -48,6 +48,11 @@ export const ExpressionPanel = ({ isExpLoading }: ExpressionPanelProps) => {
           w={220}
           value={selectedTissue}
           onChange={setSelectedTissue}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' && selectedTissue) {
+              handleAddExpression();
+            }
+          }}
           leftSection={<IconFlask size={14} />}
           disabled={isExpLoading}
         />
@@ -75,6 +80,22 @@ export const ExpressionPanel = ({ isExpLoading }: ExpressionPanelProps) => {
               color="gray"
               size="md"
               radius="sm"
+              tabIndex={0}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  handleRemoveTissue(t.tissueSiteDetailId);
+                }
+              }}
+              style={{ cursor: 'default' }}
+              styles={{
+                root: {
+                  '&:focus': {
+                    outline: '2px solid var(--mantine-color-indigo-filled)',
+                    outlineOffset: '2px',
+                  },
+                },
+                section: { marginLeft: '6px' }
+              }}
               rightSection={
                 <IconX
                   size={12}
@@ -82,7 +103,6 @@ export const ExpressionPanel = ({ isExpLoading }: ExpressionPanelProps) => {
                   onClick={() => handleRemoveTissue(t.tissueSiteDetailId)}
                 />
               }
-              styles={{ section: { marginLeft: '6px' } }}
               leftSection={
                 <Box
                   w={6}
