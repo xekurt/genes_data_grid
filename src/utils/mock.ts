@@ -17,7 +17,4 @@ function generateMockSamples(median: number, count: number = 50): number[] {
   return samples;
 }
 
-
-
-
 export { generateMockSamples };
