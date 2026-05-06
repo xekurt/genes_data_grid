@@ -1,8 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { parseCSVService } from '@/services/csvParser';
-import type { GeneRecord, CSVParseCallbacks } from '@/types/csv';
 import { useDomainStore } from '@/store/useDomainStore';
-import { validateGeneRecords } from '@/utils/validation';
+import { db } from '@/services/db';
 
 interface UseCSVParserReturn {
   error: Error | null;
@@ -10,21 +8,14 @@ interface UseCSVParserReturn {
   reset: () => void;
 }
 
-export const useCSVParser = <T extends Record<string, unknown> = GeneRecord>(
-  url: string,
-  options?: Partial<CSVParseCallbacks<T>>,
-): UseCSVParserReturn => {
+export const useCSVParser = (url: string): UseCSVParserReturn => {
   const [error, setError] = useState<Error | null>(null);
-
+  const workerRef = useRef<Worker | null>(null);
   const isParsing = useRef(false);
-  const optionsRef = useRef(options);
-  
-  useEffect(() => {
-    optionsRef.current = options;
-  }, [options]);
 
   const reset = useCallback(() => {
-    useDomainStore.getState().setGeneData([]);
+    useDomainStore.getState().setViewData([]);
+    useDomainStore.getState().setTotalCount(0);
     useDomainStore.getState().setIsDataLoading(false);
     setError(null);
     isParsing.current = false;
@@ -33,53 +24,52 @@ export const useCSVParser = <T extends Record<string, unknown> = GeneRecord>(
   const parse = useCallback(() => {
     if (isParsing.current) return;
 
-    
     reset();
     useDomainStore.getState().setIsDataLoading(true);
     isParsing.current = true;
 
-    const accumulatedData: T[] = [];
-
-    parseCSVService<T>(url, {
-      onChunk: (chunk, parser) => {
-        accumulatedData.push(...chunk);
-        
-        if (optionsRef.current?.onChunk) {
-          
-          optionsRef.current.onChunk(chunk, parser);
-        }
-      },
-      onComplete: (results) => {
-         
-        if (!validateGeneRecords(accumulatedData)) {
-          const err = new Error('Invalid CSV format: Missing required columns (ensembl, chromosome)');
-          console.info("error is here")
-          setError(err);
-          useDomainStore.getState().setIsDataLoading(false);
-          isParsing.current = false;
-          optionsRef.current?.onError?.(err);
-          return;
-        }
-
-        useDomainStore.getState().setGeneData(accumulatedData as GeneRecord[]);
-        useDomainStore.getState().setIsDataLoading(false);
-        isParsing.current = false;
-
-        if (optionsRef.current?.onComplete) {
-          optionsRef.current.onComplete(results);
-        }
-      },
-      onError: (err) => {
-        setError(err);
-        useDomainStore.getState().setIsDataLoading(false);
-        isParsing.current = false;
-
-        if (optionsRef.current?.onError) {
-          optionsRef.current.onError(err);
-        }
-      },
+    // Initialize worker
+    const worker = new Worker(new URL('../workers/parser.worker.ts', import.meta.url), {
+      type: 'module',
     });
+    workerRef.current = worker;
+
+    worker.onmessage = (e) => {
+      const { type, count, totalCount, error: workerError } = e.data;
+      if (type === 'progress') {
+        useDomainStore.getState().setTotalCount(count);
+      } else if (type === 'complete') {
+        useDomainStore.getState().setTotalCount(totalCount);
+        useDomainStore.getState().setIsDataLoading(false);
+        isParsing.current = false;
+        worker.terminate();
+      } else if (type === 'error') {
+        console.log(workerError);
+        setError(new Error(workerError));
+        useDomainStore.getState().setIsDataLoading(false);
+        isParsing.current = false;
+        worker.terminate();
+      }
+    };
+
+    worker.postMessage({ url });
   }, [url, reset]);
+
+  useEffect(() => {
+    const init = async () => {
+      const dbCount = await db.genes.count();
+      if (dbCount > 0) {
+        useDomainStore.getState().setTotalCount(dbCount);
+      } else {
+        parse();
+      }
+    };
+    init();
+
+    return () => {
+      workerRef.current?.terminate();
+    };
+  }, [parse]);
 
   return {
     error,
