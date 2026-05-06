@@ -20,6 +20,7 @@ interface DataTableProps<T extends MRT_RowData> extends Partial<
   enableURLState?: boolean;
   onVisibleIdsChange?: (ids: string[]) => void;
   idAccessor?: keyof T | ((row: T) => string);
+  urlState?: ReturnType<typeof useTableURLState>;
 }
 function resolveProps<T, P>(prop: T | ((props: P) => T) | undefined, context: P): T | undefined {
   return typeof prop === 'function' ? (prop as (c: P) => T)(context) : prop;
@@ -33,10 +34,12 @@ const DataTableComponent = <T extends MRT_RowData>({
   onVisibleIdsChange,
   enableURLState = true,
   idAccessor,
+  urlState: externalUrlState,
   ...rest
 }: DataTableProps<T>) => {
 
-  const urlState = useTableURLState();
+  const internalUrlState = useTableURLState();
+  const urlState = externalUrlState || internalUrlState;
 
 
   const [searchValue, setSearchValue] = useState(urlState.globalFilter || '');
@@ -65,6 +68,12 @@ const DataTableComponent = <T extends MRT_RowData>({
     enableColumnVirtualization: columns.length > 20,
     rowVirtualizerOptions: { overscan: 10 },
     columnVirtualizerOptions: { overscan: 5 },
+
+    // Manual Mode (Big Data ready)
+    manualPagination: true,
+    manualSorting: true,
+    manualFiltering: true,
+    rowCount: rest.rowCount,
 
     // Layout & UI
     enableStickyHeader: true,
