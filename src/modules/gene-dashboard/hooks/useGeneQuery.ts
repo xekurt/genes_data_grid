@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { db } from '@/services/db';
 import { useDomainStore } from '@/store/useDomainStore';
 import type { MRT_PaginationState, MRT_SortingState, MRT_ColumnFiltersState } from 'mantine-react-table';
