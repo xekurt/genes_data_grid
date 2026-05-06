@@ -9,10 +9,11 @@ import type { GeneRecord } from '@/types/csv';
 
 interface GeneTableProps {
   isExpLoading: boolean;
+  loadingTissueIds: Set<string>;
   onVisibleIdsChange: (ids: string[]) => void;
 }
 
-export const GeneTable = ({ isExpLoading, onVisibleIdsChange }: GeneTableProps) => {
+export const GeneTable = ({ isExpLoading, loadingTissueIds, onVisibleIdsChange }: GeneTableProps) => {
   const geneData = useDomainStore((state) => state.geneData);
   const isDataLoading = useDomainStore((state) => state.isDataLoading);
   const addedTissues = useExpressionStore((state) => state.addedTissues);
@@ -43,8 +44,8 @@ export const GeneTable = ({ isExpLoading, onVisibleIdsChange }: GeneTableProps) 
   );
 
   const columns = useMemo(() => 
-    getGeneColumns(_columnDistribution, dynamicCols), 
-    [_columnDistribution, dynamicCols]
+    getGeneColumns(_columnDistribution, dynamicCols, loadingTissueIds), 
+    [_columnDistribution, dynamicCols, loadingTissueIds]
   );
   const handleRowClick = useCallback((ensemblId: string) => {
     useUIStore.getState().setSelectedGeneId(ensemblId);
@@ -68,7 +69,7 @@ export const GeneTable = ({ isExpLoading, onVisibleIdsChange }: GeneTableProps) 
           columns={columns}
           data={geneData}
           idAccessor="ensembl"
-          isLoading={isDataLoading || isExpLoading}
+          isLoading={isDataLoading}
           onVisibleIdsChange={onVisibleIdsChange}
           mantinePaperProps={{
             style: { display: 'flex', flexDirection: 'column', height: '100%' }
