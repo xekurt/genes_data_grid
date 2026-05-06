@@ -9,12 +9,15 @@ import '@mantine/dates/styles.css';
 import 'mantine-react-table/styles.css';
 import './App.css';
 import { MantineProvider } from '@mantine/core';
+import { Notifications } from '@mantine/notifications';
+import '@mantine/notifications/styles.css';
 
 const rootEl = document.getElementById('root');
 if (rootEl) {
   const root = ReactDOM.createRoot(rootEl);
   root.render(
     <MantineProvider defaultColorScheme="auto">
+      <Notifications position="top-right" zIndex={1000} />
       <App />
     </MantineProvider>
   );
