@@ -11,6 +11,7 @@ export default defineConfig({
   plugins: [pluginReact()],
   html: {
     title: 'GeneStream Parser',
+    favicon: './public/favicon.png',
   },
   output: {
     assetPrefix: process.env.NODE_ENV === 'production' ? '/genes_data_grid/' : '/',
