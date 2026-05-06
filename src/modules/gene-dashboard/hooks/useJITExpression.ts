@@ -1,12 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
 import { notifications } from '@mantine/notifications';
-import { getExpressionByTissue } from '@/services/expressionApi';
+import { fetchGencodeMappings, fetchMedianExpressions } from '@/services/expressionApi';
 import { useExpressionStore } from '@/store/useExpressionStore';
+import { useMappingStore } from '@/store/useMappingStore';
 import type { TissueInfo } from '@/types/tissue';
-import { NO_EXPRESSION_DATA } from '@/constants/expression';
 
 export const useJITExpression = (visibleIds: string[], addedTissues: TissueInfo[]) => {
   const [loadingTissueIds, setLoadingTissueIds] = useState<Set<string>>(new Set());
+  
+  // Get store actions and state
+  const setExpressionData = useExpressionStore(state => state.setExpressionData);
+  const expressionDataMap = useExpressionStore(state => state.expressionDataMap);
+  const ensemblToGencode = useMappingStore(state => state.ensemblToGencode);
+  const setVersionMapping = useMappingStore(state => state.setVersionMapping);
+
   const fetchingRef = useRef<Record<string, Set<string>>>({});
   const isExpLoading = loadingTissueIds.size > 0;
 
@@ -16,12 +23,11 @@ export const useJITExpression = (visibleIds: string[], addedTissues: TissueInfo[
     const controller = new AbortController();
 
     const fetchMissingData = async () => {
-      const tasks: { tissueId: string; missingIds: string[] }[] = [];
-      const currentExpressionMap = useExpressionStore.getState().expressionDataMap;
+      const tasks: { tissueId: string; missingEnsemblIds: string[] }[] = [];
 
       addedTissues.forEach(tissue => {
         const tissueId = tissue.tissueSiteDetailId;
-        const currentMap = currentExpressionMap[tissueId] || {};
+        const currentMap = expressionDataMap[tissueId] || {};
         const inFlight = fetchingRef.current[tissueId] || new Set();
         
         const missing = visibleIds.filter(id => 
@@ -29,7 +35,7 @@ export const useJITExpression = (visibleIds: string[], addedTissues: TissueInfo[
         );
 
         if (missing.length > 0) {
-          tasks.push({ tissueId, missingIds: missing });
+          tasks.push({ tissueId, missingEnsemblIds: missing });
         }
       });
 
@@ -42,27 +48,72 @@ export const useJITExpression = (visibleIds: string[], addedTissues: TissueInfo[
         return next;
       });
 
-      tasks.forEach(({ tissueId, missingIds }) => {
+      tasks.forEach(({ tissueId, missingEnsemblIds }) => {
         if (!fetchingRef.current[tissueId]) fetchingRef.current[tissueId] = new Set();
-        missingIds.forEach(id => fetchingRef.current[tissueId].add(id));
+        missingEnsemblIds.forEach(id => fetchingRef.current[tissueId].add(id));
       });
 
       try {
-        const results = await Promise.all(
-          tasks.map(async ({ tissueId, missingIds }) => {
-            const newData = await getExpressionByTissue(tissueId, missingIds, controller.signal);
-            return { tissueId, missingIds, newData };
-          })
-        );
+        // Create a local map of all current mappings to avoid getState calls
+        const currentMappings = new Map(ensemblToGencode);
 
-        results.forEach(({ tissueId, missingIds, newData }) => {
-          const updateMap: Record<string, number> = {};
-          missingIds.forEach(id => {
-            updateMap[id] = newData[id] !== undefined ? newData[id] : NO_EXPRESSION_DATA;
+        // 1. Resolve any unknown Ensembl -> Gencode mappings
+        const allMissingEnsemblIds = Array.from(new Set(tasks.flatMap(t => t.missingEnsemblIds)));
+        const unknownEnsemblIds = allMissingEnsemblIds.filter(id => !currentMappings.has(id));
+        
+        if (unknownEnsemblIds.length > 0) {
+          const newMappings = await fetchGencodeMappings(unknownEnsemblIds, controller.signal);
+          Object.entries(newMappings).forEach(([unversioned, versioned]) => {
+            setVersionMapping(unversioned, versioned);
+            currentMappings.set(unversioned, versioned);
           });
           
-          useExpressionStore.getState().setExpressionData(tissueId, updateMap);
-        });
+          // Mark IDs that couldn't be resolved to avoid re-fetching
+          unknownEnsemblIds.forEach(id => {
+            if (!currentMappings.has(id)) {
+              setVersionMapping(id, '');
+              currentMappings.set(id, '');
+            }
+          });
+        }
+
+        // 2. Fetch expression data for each task
+        await Promise.all(
+          tasks.map(async ({ tissueId, missingEnsemblIds }) => {
+            const gencodeIdsToFetch: string[] = [];
+            const ensemblToGencodeForTask = new Map<string, string>();
+
+            missingEnsemblIds.forEach(id => {
+              const gencodeId = currentMappings.get(id);
+              if (gencodeId) {
+                ensemblToGencodeForTask.set(id, gencodeId);
+                gencodeIdsToFetch.push(gencodeId);
+              }
+            });
+
+            if (gencodeIdsToFetch.length === 0) {
+              // All missing IDs were unmappable
+              const updateMap: Record<string, number | null> = {};
+              missingEnsemblIds.forEach(id => { updateMap[id] = null; });
+              setExpressionData(tissueId, updateMap);
+              return;
+            }
+
+            const newData = await fetchMedianExpressions(tissueId, gencodeIdsToFetch, controller.signal);
+            
+            const updateMap: Record<string, number | null> = {};
+            missingEnsemblIds.forEach(id => {
+              const gencodeId = ensemblToGencodeForTask.get(id);
+              if (gencodeId && newData[gencodeId] !== undefined) {
+                updateMap[id] = newData[gencodeId];
+              } else {
+                updateMap[id] = null;
+              }
+            });
+            
+            setExpressionData(tissueId, updateMap);
+          })
+        );
       } catch (err) {
         if ((err as Error).name !== 'AbortError') {
           console.error('JIT Fetch failed:', err);
@@ -78,8 +129,8 @@ export const useJITExpression = (visibleIds: string[], addedTissues: TissueInfo[
           taskTissueIds.forEach(id => next.delete(id));
           return next;
         });
-        tasks.forEach(({ tissueId, missingIds }) => {
-          missingIds.forEach(id => fetchingRef.current[tissueId]?.delete(id));
+        tasks.forEach(({ tissueId, missingEnsemblIds }) => {
+          missingEnsemblIds.forEach(id => fetchingRef.current[tissueId]?.delete(id));
         });
       }
     };
@@ -89,7 +140,7 @@ export const useJITExpression = (visibleIds: string[], addedTissues: TissueInfo[
     return () => {
       controller.abort();
     };
-  }, [visibleIds, addedTissues]);
+  }, [visibleIds, addedTissues, expressionDataMap, ensemblToGencode, setExpressionData, setVersionMapping]);
 
   return { isExpLoading, loadingTissueIds };
 };
