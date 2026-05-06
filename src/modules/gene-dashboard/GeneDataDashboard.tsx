@@ -1,9 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Grid, Group, Stack } from '@mantine/core';
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { Grid, Group, Stack, Skeleton, Paper } from '@mantine/core';
 import { useJITExpression } from './hooks/useJITExpression';
 import { ExpressionPanel } from './components/ExpressionPanel';
 import { GeneTable } from './components/GeneTable';
-import { GeneDetailView } from '@/modules/gene-detail/GeneDetailView';
+
+const GeneDetailView = lazy(() => 
+  import('./components/gene-detail/GeneDetailView').then(module => ({ default: module.GeneDetailView }))
+);
 import { useDomainStore } from '@/store/useDomainStore';
 import { useExpressionStore } from '@/store/useExpressionStore';
 import { useCSVParser } from '@/hooks/useCSVParser';
@@ -47,7 +50,17 @@ export const GeneDataDashboard = () => {
             />
           </Grid.Col>
           <Grid.Col span={{ base: 12, md: 4 }} style={{ display: 'flex', flexDirection: 'column' }}>
-            <GeneDetailView />
+            <Suspense fallback={
+              <Paper withBorder p="xl" radius="sm" shadow="sm" h="100%">
+                <Stack>
+                  <Skeleton height={40} />
+                  <Skeleton height={200} />
+                  <Skeleton height={200} />
+                </Stack>
+              </Paper>
+            }>
+              <GeneDetailView />
+            </Suspense>
           </Grid.Col>
         </Grid>
       )}

@@ -8,7 +8,8 @@ import {
   Stack,
 } from '@mantine/core';
 import { IconDna } from '@tabler/icons-react';
-import { GeneDataDashboard } from './modules/gene-data-table/GeneDataDashboard';
+import { GeneDataDashboard } from './modules/gene-dashboard/GeneDataDashboard';
+
 
 const App = () => {
   return (
