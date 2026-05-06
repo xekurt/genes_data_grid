@@ -1,6 +1,5 @@
 import { Group, Box, Text, Skeleton } from '@mantine/core';
 import { useExpressionStore } from '@/store/useExpressionStore';
-import { NO_EXPRESSION_DATA } from '@/constants/expression';
 
 interface ExpressionCellProps {
   ensemblId: string;
@@ -16,7 +15,7 @@ export const ExpressionCell = ({ ensemblId, tissueId, color, isLoading }: Expres
     return <Skeleton height={18} width="100%" radius="xs" />;
   }
 
-  if (val === undefined || val === NO_EXPRESSION_DATA) {
+  if (val === undefined || val === null) {
     return <Text size="xs" c="dimmed">-</Text>;
   }
 
