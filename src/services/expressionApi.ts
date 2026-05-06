@@ -47,6 +47,7 @@ export const fetchGencodeMappings = async (
         json.data.forEach((gene) => {
           const unversioned = gene.gencodeId.split('.')[0];
           mappings[unversioned] = gene.gencodeId;
+          mappings[gene.gencodeId] = gene.gencodeId;
         });
       } catch (err) {
         if ((err as Error).name !== 'AbortError') {
