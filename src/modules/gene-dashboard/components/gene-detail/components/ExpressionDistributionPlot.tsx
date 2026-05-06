@@ -7,7 +7,6 @@ import { useExpressionStore } from '@/store/useExpressionStore';
 import { generateMockSamples } from '@/utils/mock';
 
 import type { Data, BoxPlotData, ViolinData } from 'plotly.js';
-import { NO_EXPRESSION_DATA } from '@/constants/expression';
 
 const Plot = createPlotlyComponent(Plotly);
 
@@ -25,8 +24,8 @@ export const ExpressionDistributionPlot = () => {
     return addedTissues.map((tissue): Data => {
       const medianTPM = expressionDataMap[tissue.tissueSiteDetailId]?.[selectedGeneId];
       
-      // Handle NO_EXPRESSION_DATA or undefined
-      if (medianTPM === undefined || medianTPM === NO_EXPRESSION_DATA) {
+      // Handle null or undefined
+      if (medianTPM === undefined || medianTPM === null) {
         return {
           type: plotType,
           y: [],
