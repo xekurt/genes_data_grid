@@ -1,7 +1,7 @@
 import type { GoslingSpec } from 'gosling.js';
-import type { EnrichedGeneRecord } from '../types/csv';
+import type { GeneRecord } from '@/types/csv';
 
-export const generateGeneAnnotationSpec = (gene: EnrichedGeneRecord | null): GoslingSpec | null => {
+export const generateGeneAnnotationSpec = (gene: GeneRecord | null): GoslingSpec | null => {
   if (!gene) return null;
 
   const chromosomeStr = String(gene.chromosome);
