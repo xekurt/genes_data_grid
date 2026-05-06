@@ -2,14 +2,14 @@ import { useState, useMemo } from 'react';
 import { Box, Group, SegmentedControl, Text, Stack } from '@mantine/core';
 import Plotly from 'plotly.js-dist-min';
 import createPlotlyComponent from 'react-plotly.js/factory';
-import { useUIStore } from '../../../store/useUIStore';
-import { useExpressionStore } from '../../../store/useExpressionStore';
-import { generateMockSamples } from '../../../utils/mock';
+import { useUIStore } from '@/store/useUIStore';
+import { useExpressionStore } from '@/store/useExpressionStore';
+import { generateMockSamples } from '@/utils/mock';
+
+import type { Data, BoxPlotData, ViolinData } from 'plotly.js';
+import { NO_EXPRESSION_DATA } from '@/constants/expression';
 
 const Plot = createPlotlyComponent(Plotly);
-
-
-
 
 export const ExpressionDistributionPlot = () => {
   const selectedGeneId = useUIStore((state) => state.selectedGeneId);
@@ -19,11 +19,22 @@ export const ExpressionDistributionPlot = () => {
   const [plotType, setPlotType] = useState<'violin' | 'box'>('violin');
   const [scaleType, setScaleType] = useState<'linear' | 'log'>('linear');
 
-  const plotData = useMemo(() => {
+  const plotData = useMemo<Data[]>(() => {
     if (!selectedGeneId) return [];
 
-    return addedTissues.map((tissue) => {
-      const medianTPM = expressionDataMap[tissue.tissueSiteDetailId]?.[selectedGeneId] ?? 0;
+    return addedTissues.map((tissue): Data => {
+      const medianTPM = expressionDataMap[tissue.tissueSiteDetailId]?.[selectedGeneId];
+      
+      // Handle NO_EXPRESSION_DATA or undefined
+      if (medianTPM === undefined || medianTPM === NO_EXPRESSION_DATA) {
+        return {
+          type: plotType,
+          y: [],
+          name: `${tissue.tissueSiteDetail} (No Data)`,
+          marker: { color: '#ccc' },
+        } as Data;
+      }
+
       const samples = generateMockSamples(medianTPM);
       
       const finalSamples = scaleType === 'log' 
@@ -42,9 +53,16 @@ export const ExpressionDistributionPlot = () => {
         points: 'all',
         jitter: 0.5,
         bandwidth: 0.5, // for violin
-      };
+      } as Data;
     });
   }, [selectedGeneId, addedTissues, expressionDataMap, plotType, scaleType]);
+
+  const hasData = useMemo(() => {
+    return plotData.some(d => {
+      const yData = (d as BoxPlotData | ViolinData).y;
+      return Array.isArray(yData) && yData.length > 0;
+    });
+  }, [plotData]);
 
   if (!selectedGeneId || addedTissues.length === 0) {
     return (
@@ -61,7 +79,28 @@ export const ExpressionDistributionPlot = () => {
         }}
       >
         <Text c="dimmed" size="sm">
-          No expression data available. Add a tissue to view distribution.
+          No tissues added. Add a tissue to view distribution.
+        </Text>
+      </Box>
+    );
+  }
+
+  if (!hasData) {
+    return (
+      <Box 
+        style={{ 
+          flex: 1, 
+          minHeight: 300, 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          backgroundColor: 'var(--mantine-color-gray-0)', 
+          borderRadius: 'var(--mantine-radius-sm)',
+          border: '1px dashed var(--mantine-color-gray-3)'
+        }}
+      >
+        <Text c="dimmed" size="sm">
+          No expression detected for this gene in selected tissues.
         </Text>
       </Box>
     );
@@ -75,7 +114,7 @@ export const ExpressionDistributionPlot = () => {
           <SegmentedControl
             size="xs"
             value={plotType}
-            onChange={(val: any) => setPlotType(val)}
+            onChange={(val) => setPlotType(val as 'violin' | 'box')}
             data={[
               { label: 'Violin', value: 'violin' },
               { label: 'Box', value: 'box' },
@@ -87,7 +126,7 @@ export const ExpressionDistributionPlot = () => {
           <SegmentedControl
             size="xs"
             value={scaleType}
-            onChange={(val: any) => setScaleType(val)}
+            onChange={(val) => setScaleType(val as 'linear' | 'log')}
             data={[
               { label: 'Linear', value: 'linear' },
               { label: 'Log10(TPM+1)', value: 'log' },
@@ -98,7 +137,7 @@ export const ExpressionDistributionPlot = () => {
 
       <Box style={{ flex: 1, minHeight: 0, width: '100%' }}>
         <Plot
-          data={plotData as any}
+          data={plotData}
           layout={{
             autosize: true,
             margin: { l: 50, r: 20, t: 10, b: 80 },
