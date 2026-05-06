@@ -13,18 +13,13 @@ import { useTableURLState } from './useTableURLState';
 interface DataTableProps<T extends MRT_RowData> extends Partial<
   MRT_TableOptions<T>
 > {
-  
   columns: MRT_ColumnDef<T>[];
-  
   data: T[];
-  
   isLoading?: boolean;
-  
   maxHeight?: string | number;
-  
   enableURLState?: boolean;
-  
   onVisibleIdsChange?: (ids: string[]) => void;
+  idAccessor?: keyof T | ((row: T) => string);
 }
 function resolveProps<T, P>(prop: T | ((props: P) => T) | undefined, context: P): T | undefined {
   return typeof prop === 'function' ? (prop as (c: P) => T)(context) : prop;
@@ -37,6 +32,7 @@ const DataTableComponent = <T extends MRT_RowData>({
   maxHeight = 'calc(100vh - 250px)',
   onVisibleIdsChange,
   enableURLState = true,
+  idAccessor,
   ...rest
 }: DataTableProps<T>) => {
 
@@ -45,20 +41,19 @@ const DataTableComponent = <T extends MRT_RowData>({
 
   const [searchValue, setSearchValue] = useState(urlState.globalFilter || '');
   const [debouncedSearchValue] = useDebouncedValue(searchValue, 300);
+  const [prevUrlFilter, setPrevUrlFilter] = useState(urlState.globalFilter);
 
+  // Sync local state with URL state (e.g. on browser navigation)
+  if (urlState.globalFilter !== prevUrlFilter) {
+    setSearchValue(urlState.globalFilter || '');
+    setPrevUrlFilter(urlState.globalFilter);
+  }
 
   useEffect(() => {
     if (enableURLState) {
       urlState.setGlobalFilter(debouncedSearchValue);
     }
-  }, [debouncedSearchValue, enableURLState]);
-
-
-  useEffect(() => {
-    if (urlState.globalFilter !== searchValue) {
-      setSearchValue(urlState.globalFilter || '');
-    }
-  }, [urlState.globalFilter, searchValue]);
+  }, [debouncedSearchValue, enableURLState, urlState]);
 
   const table = useMantineReactTable({
     // Default optimized settings
@@ -80,8 +75,6 @@ const DataTableComponent = <T extends MRT_RowData>({
     
     enableSorting: true,
     enableDensityToggle: true,
-    mantineSearchTextInputProps: {
-    placeholder: 'Enter Ensembl ID...'},
 
     initialState: {
       density: 'xs',
@@ -186,8 +179,12 @@ const DataTableComponent = <T extends MRT_RowData>({
 
   const visibleRows = table.getRowModel().rows;
   const visibleIds = useMemo(() => 
-    visibleRows.map((row) => (row.original as any).ensembl || row.id), 
-    [visibleRows]
+    visibleRows.map((row) => {
+      if (typeof idAccessor === 'function') return idAccessor(row.original);
+      if (idAccessor) return String(row.original[idAccessor]);
+      return row.id;
+    }), 
+    [visibleRows, idAccessor]
   );
   
   const [debouncedVisibleIds] = useDebouncedValue(visibleIds, 200);
