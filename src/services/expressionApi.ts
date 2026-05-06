@@ -1,6 +1,10 @@
 import { chunkArray } from '@/utils/array';
-import type { TissueInfo, ExpressionData, GTExTissueResponse, GTExMedianExpressionResponse, GTExGeneResponse } from '@/types/tissue';
-import { useCacheStore } from '@/store/useCacheStore';
+import type { 
+  TissueInfo, 
+  GTExTissueResponse, 
+  GTExMedianExpressionResponse, 
+  GTExGeneResponse 
+} from '@/types/tissue';
 
 const GTEX_API_BASE = 'https://gtexportal.org/api/v2';
 
@@ -24,12 +28,12 @@ export const getAvailableTissues = async (signal?: AbortSignal): Promise<TissueI
   }
 };
 
-const resolveVersionedIds = async (ensemblIds: string[], signal?: AbortSignal): Promise<void> => {
-  const { ensemblToGencode, setVersionMapping } = useCacheStore.getState();
-  const unresolved = ensemblIds.filter((id) => !ensemblToGencode.has(id));
-  if (unresolved.length === 0) return;
-
-  const chunks = chunkArray(unresolved, 100);
+export const fetchGencodeMappings = async (
+  ensemblIds: string[],
+  signal?: AbortSignal
+): Promise<Record<string, string>> => {
+  const mappings: Record<string, string> = {};
+  const chunks = chunkArray(ensemblIds, 100);
 
   await Promise.all(
     chunks.map(async (chunk) => {
@@ -42,96 +46,54 @@ const resolveVersionedIds = async (ensemblIds: string[], signal?: AbortSignal): 
         const json: GTExGeneResponse = await response.json();
         json.data.forEach((gene) => {
           const unversioned = gene.gencodeId.split('.')[0];
-          setVersionMapping(unversioned, gene.gencodeId);
-        });
-
-        // Mark as resolved even if not found to avoid re-fetching
-        chunk.forEach((id) => {
-          if (!useCacheStore.getState().ensemblToGencode.has(id)) {
-            setVersionMapping(id, '');
-          }
+          mappings[unversioned] = gene.gencodeId;
         });
       } catch (err) {
         if ((err as Error).name !== 'AbortError') {
-          console.error('Resolution failed:', err);
+          console.error('Mapping fetch failed:', err);
         }
       }
-    }),
+    })
   );
+
+  return mappings;
 };
 
-export const getExpressionByTissue = async (
+export const fetchMedianExpressions = async (
   tissueId: string,
-  ensemblIds: string[],
-  signal?: AbortSignal,
-): Promise<ExpressionData> => {
-  const { expressionCache, setExpressionCache } = useCacheStore.getState();
-  
-  const missingIds = ensemblIds.filter(id => !expressionCache.has(`${tissueId}:${id}`));
+  gencodeIds: string[],
+  signal?: AbortSignal
+): Promise<Record<string, number>> => {
+  const results: Record<string, number> = {};
+  const chunks = chunkArray(gencodeIds, 100);
 
-  if (missingIds.length > 0) {
-    await resolveVersionedIds(missingIds, signal);
+  await Promise.all(
+    chunks.map(async (chunk) => {
+      const params = new URLSearchParams({ 
+        datasetId: 'gtex_v8',
+        tissueSiteDetailId: tissueId 
+      });
+      chunk.forEach((id) => params.append('gencodeId', id));
 
-    const versionedIds = missingIds
-      .map((id) => {
-        const gencodeId = useCacheStore.getState().ensemblToGencode.get(id);
-        if (!gencodeId) {
-           setExpressionCache(`${tissueId}:${id}`, null);
+      try {
+        const response = await fetch(
+          `${GTEX_API_BASE}/expression/medianGeneExpression?${params.toString()}`,
+          { signal }
+        );
+        if (!response.ok) throw new Error(`Fetch failed: ${response.statusText}`);
+        
+        const json: GTExMedianExpressionResponse = await response.json();
+        json.data.forEach((item) => {
+          results[item.gencodeId] = item.median;
+        });
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') {
+          console.error('Expression fetch failed:', err);
+          throw err;
         }
-        return gencodeId;
-      })
-      .filter((id): id is string => !!id);
+      }
+    })
+  );
 
-    if (versionedIds.length > 0) {
-      const chunks = chunkArray(versionedIds, 100);
-
-      await Promise.all(
-        chunks.map(async (chunk) => {
-          const params = new URLSearchParams({ 
-            datasetId: 'gtex_v8',
-            tissueSiteDetailId: tissueId 
-          });
-          chunk.forEach((id) => params.append('gencodeId', id));
-
-          try {
-            const response = await fetch(
-              `${GTEX_API_BASE}/expression/medianGeneExpression?${params.toString()}`,
-              { signal }
-            );
-            if (!response.ok) throw new Error(`Fetch failed: ${response.statusText}`);
-            
-            const json: GTExMedianExpressionResponse = await response.json();
-            json.data.forEach((item) => {
-              const baseId = useCacheStore.getState().gencodeToEnsembl.get(item.gencodeId) || item.gencodeId.split('.')[0];
-              setExpressionCache(`${tissueId}:${baseId}`, item.median);
-            });
-            
-            // Fill in blanks for IDs that were requested but not returned
-            chunk.forEach((gencodeId) => {
-              const baseId = useCacheStore.getState().gencodeToEnsembl.get(gencodeId) || gencodeId.split('.')[0];
-              if (!useCacheStore.getState().expressionCache.has(`${tissueId}:${baseId}`)) {
-                setExpressionCache(`${tissueId}:${baseId}`, null);
-              }
-            });
-          } catch (err) {
-            if ((err as Error).name !== 'AbortError') {
-              console.error('Fetch failed:', err);
-              throw err;
-            }
-          }
-        }),
-      );
-    }
-  }
-
-  const result: ExpressionData = {};
-  const currentCache = useCacheStore.getState().expressionCache;
-  ensemblIds.forEach(id => {
-    const val = currentCache.get(`${tissueId}:${id}`);
-    if (val !== undefined && val !== null) {
-      result[id] = val;
-    }
-  });
-
-  return result;
+  return results;
 };
