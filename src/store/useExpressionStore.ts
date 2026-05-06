@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { TissueInfo } from '../services/expressionApi';
+import type { TissueInfo } from '../types/tissue';
 
 interface ExpressionState {
   expressionDataMap: Record<string, Record<string, number>>;
