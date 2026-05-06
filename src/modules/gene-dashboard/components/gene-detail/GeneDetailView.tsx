@@ -3,16 +3,40 @@ import { useFullscreen } from '@mantine/hooks';
 import { IconChartBar, IconDna } from '@tabler/icons-react';
 
 import { useUIStore } from '@/store/useUIStore';
-import { useDomainStore } from '@/store/useDomainStore';
+import type { GeneRecord } from '@/types/csv';
 import { GeneDetailHeader } from './components/GeneDetailHeader';
 import { ExpressionDistributionPlot } from './components/ExpressionDistributionPlot';
 import { GeneAnnotationTrack } from './components/GeneAnnotationTrack';
 
+import { useState, useEffect } from 'react';
+import { db } from '@/services/db';
+
 export const GeneDetailView = () => {
   const selectedGeneId = useUIStore((state) => state.selectedGeneId);
-  const gene = useDomainStore((state) => 
-    selectedGeneId ? state.geneMap.get(selectedGeneId) : null
-  );
+  const [gene, setGene] = useState<GeneRecord | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!selectedGeneId) {
+      setGene(null);
+      return;
+    }
+
+    const fetchGene = async () => {
+      setIsLoading(true);
+      try {
+        const record = await db.genes.get(selectedGeneId);
+        setGene(record || null);
+      } catch (error) {
+        console.error('Failed to fetch gene detail:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchGene();
+  }, [selectedGeneId]);
+
   const { ref, toggle, fullscreen } = useFullscreen();
 
   if (!gene) {
