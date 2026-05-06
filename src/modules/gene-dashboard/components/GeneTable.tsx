@@ -6,24 +6,35 @@ import { useDomainStore } from '@/store/useDomainStore';
 import { useExpressionStore } from '@/store/useExpressionStore';
 import { getGeneColumns } from './Columns';
 import type { GeneRecord } from '@/types/csv';
+import { useTableURLState } from '@/components/useTableURLState';
+import { useGeneQuery } from '../hooks/useGeneQuery';
 
 interface GeneTableProps {
-  isExpLoading: boolean;
   loadingTissueIds: Set<string>;
   onVisibleIdsChange: (ids: string[]) => void;
 }
 
-export const GeneTable = ({ isExpLoading, loadingTissueIds, onVisibleIdsChange }: GeneTableProps) => {
-  const geneData = useDomainStore((state) => state.geneData);
+export const GeneTable = ({ loadingTissueIds, onVisibleIdsChange }: GeneTableProps) => {
+  const urlState = useTableURLState();
+  const viewData = useDomainStore((state) => state.viewData);
+  const totalCount = useDomainStore((state) => state.totalCount);
   const isDataLoading = useDomainStore((state) => state.isDataLoading);
   const addedTissues = useExpressionStore((state) => state.addedTissues);
   const selectedGeneId = useUIStore((state) => state.selectedGeneId);
+
+  // Hook into the database
+  useGeneQuery({
+    pagination: urlState.pagination,
+    sorting: urlState.sorting,
+    columnFilters: urlState.columnFilters,
+    globalFilter: urlState.globalFilter,
+  });
 
   const _columnDistribution = useMemo(() => {
     const biotypeCounts: Record<string, number> = {};
     const chromCounts: Record<string, number> = {};
 
-    geneData.forEach((gene) => {
+    viewData.forEach((gene) => {
       if (gene.biotype) {
         biotypeCounts[gene.biotype] = (biotypeCounts[gene.biotype] || 0) + 1;
       }
@@ -33,7 +44,7 @@ export const GeneTable = ({ isExpLoading, loadingTissueIds, onVisibleIdsChange }
     });
 
     return { biotypeCounts, chromCounts };
-  }, [geneData]);
+  }, [viewData]);
 
   const dynamicCols = useMemo(() => 
     addedTissues.map(t => ({
@@ -67,9 +78,11 @@ export const GeneTable = ({ isExpLoading, loadingTissueIds, onVisibleIdsChange }
       <Box style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
         <DataTable
           columns={columns}
-          data={geneData}
+          data={viewData}
           idAccessor="ensembl"
           isLoading={isDataLoading}
+          rowCount={totalCount}
+          urlState={urlState}
           onVisibleIdsChange={onVisibleIdsChange}
           mantinePaperProps={{
             style: { display: 'flex', flexDirection: 'column', height: '100%' }
@@ -82,7 +95,7 @@ export const GeneTable = ({ isExpLoading, loadingTissueIds, onVisibleIdsChange }
       </Box>
       <Box p="xs" ta="center" bg="gray.0" style={{ borderTop: '1px solid var(--mantine-color-gray-3)' }}>
         <Text size="xs" c="dimmed">
-          Virtualization active: {geneData.length.toLocaleString()} rows rendered with 60fps performance.
+          Virtualization active: {totalCount.toLocaleString()} total rows in database.
         </Text>
       </Box>
     </Paper>
