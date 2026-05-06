@@ -1,7 +1,8 @@
 import { Badge, Text, Group, Box, Stack } from '@mantine/core';
 import type { MRT_ColumnDef } from 'mantine-react-table';
-import type { GeneRecord } from '../../../types/csv';
-import { getCategoryColor, CategoryHistogram } from './GeneTableUtils';
+import type { GeneRecord } from '@/types/csv';
+import { getCategoryColor } from '@/utils/color';
+import { CategoryHistogram } from './GeneTableUtils';
 import { ExpressionCell } from './ExpressionCell';
 
 export const getGeneColumns = (
