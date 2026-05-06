@@ -1,22 +1,23 @@
-import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
-import { Grid, Group, Stack, Skeleton, Paper } from '@mantine/core';
+import { useState, useCallback, lazy, Suspense } from 'react';
+import { Grid, Group, Stack, Skeleton, Paper, Center, Loader, Text, Title } from '@mantine/core';
 import { useJITExpression } from './hooks/useJITExpression';
 import { ExpressionPanel } from './components/ExpressionPanel';
 import { GeneTable } from './components/GeneTable';
-
-const GeneDetailView = lazy(() => 
-  import('./components/gene-detail/GeneDetailView').then(module => ({ default: module.GeneDetailView }))
-);
 import { useDomainStore } from '@/store/useDomainStore';
 import { useExpressionStore } from '@/store/useExpressionStore';
 import { useCSVParser } from '@/hooks/useCSVParser';
 import { ASSET_URLS } from '@/utils/url';
 
+const GeneDetailView = lazy(() => 
+  import('./components/gene-detail/GeneDetailView').then(module => ({ default: module.GeneDetailView }))
+);
+
 export const GeneDataDashboard = () => {
   const totalCount = useDomainStore((state) => state.totalCount);
+  const isDataLoading = useDomainStore((state) => state.isDataLoading);
   const addedTissues = useExpressionStore((state) => state.addedTissues);
-
-  const { parse } = useCSVParser(ASSET_URLS.GENES_HUMAN);
+  
+  useCSVParser(ASSET_URLS.GENES_HUMAN);
   
   const [visibleIds, setVisibleIds] = useState<string[]>([]);
 
@@ -26,7 +27,17 @@ export const GeneDataDashboard = () => {
     setVisibleIds(ids);
   }, []);
 
-  
+  if (totalCount === 0 && isDataLoading) {
+    return (
+      <Center h="60vh">
+        <Stack align="center" gap="md">
+          <Loader size="xl" variant="bars" />
+          <Title order={3}>Ingesting Genomic Data</Title>
+          <Text c="dimmed">Parsing CSV and initializing IndexedDB storage...</Text>
+        </Stack>
+      </Center>
+    );
+  }
 
   return (
     <Stack pb="lg" style={{ overflow: 'hidden', backgroundColor: 'var(--mantine-color-gray-0)'}}>
