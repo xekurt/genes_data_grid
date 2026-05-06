@@ -1,5 +1,6 @@
 import { Group, Box, Text } from '@mantine/core';
-import { useExpressionStore } from '../../../store/useExpressionStore';
+import { useExpressionStore } from '@/store/useExpressionStore';
+import { NO_EXPRESSION_DATA } from '@/constants/expression';
 
 interface ExpressionCellProps {
   ensemblId: string;
@@ -10,7 +11,7 @@ interface ExpressionCellProps {
 export const ExpressionCell = ({ ensemblId, tissueId, color }: ExpressionCellProps) => {
   const val = useExpressionStore((state) => state.expressionDataMap[tissueId]?.[ensemblId]);
 
-  if (val === undefined || val === -1) {
+  if (val === undefined || val === NO_EXPRESSION_DATA) {
     return <Text size="xs" c="dimmed">-</Text>;
   }
 
