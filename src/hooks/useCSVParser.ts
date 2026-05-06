@@ -1,11 +1,11 @@
-import { useState, useCallback, useRef } from 'react';
-import { parseCSVService } from '../services/csvParser';
-import type { GeneRecord, CSVParseCallbacks } from '../types/csv';
-import { useDomainStore } from '../store/useDomainStore';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { parseCSVService } from '@/services/csvParser';
+import type { GeneRecord, CSVParseCallbacks } from '@/types/csv';
+import { useDomainStore } from '@/store/useDomainStore';
+import { validateGeneRecords } from '@/utils/validation';
 
-interface UseCSVParserReturn<T> {
+interface UseCSVParserReturn {
   error: Error | null;
-  totalRows: number;
   parse: () => void;
   reset: () => void;
 }
@@ -13,44 +13,55 @@ interface UseCSVParserReturn<T> {
 export const useCSVParser = <T extends Record<string, unknown> = GeneRecord>(
   url: string,
   options?: Partial<CSVParseCallbacks<T>>,
-): UseCSVParserReturn<T> => {
+): UseCSVParserReturn => {
   const [error, setError] = useState<Error | null>(null);
-  const [totalRows, setTotalRows] = useState(0);
 
   const isParsing = useRef(false);
   const optionsRef = useRef(options);
   
-  // Keep optionsRef up to date without triggering re-renders
-  optionsRef.current = options;
+  useEffect(() => {
+    optionsRef.current = options;
+  }, [options]);
 
   const reset = useCallback(() => {
     useDomainStore.getState().setGeneData([]);
     useDomainStore.getState().setIsDataLoading(false);
     setError(null);
-    setTotalRows(0);
     isParsing.current = false;
   }, []);
 
   const parse = useCallback(() => {
     if (isParsing.current) return;
 
+    
     reset();
     useDomainStore.getState().setIsDataLoading(true);
     isParsing.current = true;
 
-    let accumulatedData: T[] = [];
+    const accumulatedData: T[] = [];
 
     parseCSVService<T>(url, {
       onChunk: (chunk, parser) => {
-        accumulatedData = [...accumulatedData, ...chunk];
-        setTotalRows((prevCount) => prevCount + chunk.length);
-
+        accumulatedData.push(...chunk);
+        
         if (optionsRef.current?.onChunk) {
+          
           optionsRef.current.onChunk(chunk, parser);
         }
       },
       onComplete: (results) => {
-        useDomainStore.getState().setGeneData(accumulatedData as unknown as GeneRecord[]);
+         
+        if (!validateGeneRecords(accumulatedData)) {
+          const err = new Error('Invalid CSV format: Missing required columns (ensembl, chromosome)');
+          console.info("error is here")
+          setError(err);
+          useDomainStore.getState().setIsDataLoading(false);
+          isParsing.current = false;
+          optionsRef.current?.onError?.(err);
+          return;
+        }
+
+        useDomainStore.getState().setGeneData(accumulatedData as GeneRecord[]);
         useDomainStore.getState().setIsDataLoading(false);
         isParsing.current = false;
 
@@ -72,7 +83,6 @@ export const useCSVParser = <T extends Record<string, unknown> = GeneRecord>(
 
   return {
     error,
-    totalRows,
     parse,
     reset,
   };
