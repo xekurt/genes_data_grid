@@ -1,27 +1,8 @@
+import { memo } from 'react';
 import { Flex, Tooltip, Box } from '@mantine/core';
+import { getCategoryColor } from '@/utils/color';
 
-
-export const getCategoryColor = (category: string) => {
-  const colors = [
-    '#228be6', // blue
-    '#40c057', // green
-    '#fab005', // yellow
-    '#fd7e14', // orange
-    '#e64980', // pink
-    '#7950f2', // violet
-    '#15aabf', // cyan
-    '#82c91e', // lime
-    '#f03e3e', // red
-    '#be4bdb', // grape
-  ];
-  let hash = 0;
-  for (let i = 0; i < category.length; i++) {
-    hash = category.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return colors[Math.abs(hash) % colors.length];
-};
-
-export const CategoryHistogram = ({
+export const CategoryHistogram = memo(({
   counts,
 }: {
   counts: Record<string, number>;
@@ -51,4 +32,4 @@ export const CategoryHistogram = ({
       })}
     </Flex>
   );
-};
+});

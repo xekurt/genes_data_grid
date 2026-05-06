@@ -1,11 +1,16 @@
 import { Title, Text, Group, Badge, Divider, Grid } from '@mantine/core';
-import type { EnrichedGeneRecord } from '../../../types/csv';
+import type { GeneRecord } from '@/types/csv';
 
 interface GeneDetailHeaderProps {
-  gene: EnrichedGeneRecord;
+  gene: GeneRecord;
 }
 
 export const GeneDetailHeader = ({ gene }: GeneDetailHeaderProps) => {
+  const formatPos = (val: number | undefined | null) => {
+    if (val === undefined || val === null) return '-';
+    return typeof val === 'number' ? val.toLocaleString() : val;
+  };
+
   return (
     <>
       <Group justify="space-between" align="flex-start">
@@ -29,11 +34,11 @@ export const GeneDetailHeader = ({ gene }: GeneDetailHeaderProps) => {
         </Grid.Col>
         <Grid.Col span={6}>
           <Text size="sm" c="dimmed">Start Position</Text>
-          <Text fw={500}>{gene.seq_region_start.toLocaleString()}</Text>
+          <Text fw={500}>{formatPos(gene.seq_region_start)}</Text>
         </Grid.Col>
         <Grid.Col span={6}>
           <Text size="sm" c="dimmed">End Position</Text>
-          <Text fw={500}>{gene.seq_region_end.toLocaleString()}</Text>
+          <Text fw={500}>{formatPos(gene.seq_region_end)}</Text>
         </Grid.Col>
       </Grid>
     </>

@@ -1,18 +1,17 @@
 import { Paper, Text, Stack, Tabs } from '@mantine/core';
 import { IconChartBar, IconDna } from '@tabler/icons-react';
 
-import { useUIStore } from '../../store/useUIStore';
-import { useDomainStore } from '../../store/useDomainStore';
-
+import { useUIStore } from '@/store/useUIStore';
+import { useDomainStore } from '@/store/useDomainStore';
 import { GeneDetailHeader } from './components/GeneDetailHeader';
 import { ExpressionDistributionPlot } from './components/ExpressionDistributionPlot';
 import { GeneAnnotationTrack } from './components/GeneAnnotationTrack';
 
 export const GeneDetailView = () => {
   const selectedGeneId = useUIStore((state) => state.selectedGeneId);
-  const geneData = useDomainStore((state) => state.geneData);
-
-  const gene = geneData.find((g) => g.ensembl === selectedGeneId) || null;
+  const gene = useDomainStore((state) => 
+    selectedGeneId ? state.geneMap.get(selectedGeneId) : null
+  );
 
   if (!gene) {
     return (
@@ -26,7 +25,7 @@ export const GeneDetailView = () => {
     <Paper withBorder radius="sm" p="xs" shadow="xs" h="100%" style={{ display: 'flex', flexDirection: 'column', borderRadius: 'none' }}>
       <Stack gap="xs" style={{ flex: 1, minHeight: 0 }}>
         
-        <GeneDetailHeader gene={gene as any} />
+        <GeneDetailHeader gene={gene} />
 
         <Tabs defaultValue="expression" keepMounted={false} style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }} mt="0">
           <Tabs.List>
@@ -43,7 +42,7 @@ export const GeneDetailView = () => {
           </Tabs.Panel>
 
           <Tabs.Panel value="annotation" pt="xs" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <GeneAnnotationTrack gene={gene as any} />
+            <GeneAnnotationTrack gene={gene} />
           </Tabs.Panel>
         </Tabs>
       </Stack>

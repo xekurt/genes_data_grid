@@ -1,10 +1,11 @@
-import { useMemo } from 'react';
-import { DataTable } from '../../../components/DataTable';
+import { useCallback, useMemo } from 'react';
+import { DataTable } from '@/components/DataTable';
 import { Box, Paper, Text } from '@mantine/core';
-import { useUIStore } from '../../../store/useUIStore';
-import { useDomainStore } from '../../../store/useDomainStore';
-import { useExpressionStore } from '../../../store/useExpressionStore';
+import { useUIStore } from '@/store/useUIStore';
+import { useDomainStore } from '@/store/useDomainStore';
+import { useExpressionStore } from '@/store/useExpressionStore';
 import { getGeneColumns } from './Columns';
+import type { GeneRecord } from '@/types/csv';
 
 interface GeneTableProps {
   isExpLoading: boolean;
@@ -45,6 +46,20 @@ export const GeneTable = ({ isExpLoading, onVisibleIdsChange }: GeneTableProps) 
     getGeneColumns(_columnDistribution, dynamicCols), 
     [_columnDistribution, dynamicCols]
   );
+  const handleRowClick = useCallback((ensemblId: string) => {
+    useUIStore.getState().setSelectedGeneId(ensemblId);
+  }, []);
+
+  const getRowProps = useCallback(({ row }: { row: { original: GeneRecord } }) => ({
+    onClick: () => handleRowClick(row.original.ensembl),
+    style: {
+      cursor: 'pointer',
+      ...(row.original.ensembl === selectedGeneId ? {
+        boxShadow: 'inset 0 0 0 2px var(--mantine-color-blue-filled)',
+        backgroundColor: 'var(--mantine-color-blue-light)'
+      } : {})
+    },
+  }), [handleRowClick, selectedGeneId]);
 
   return (
     <Paper withBorder radius="sm" shadow="xs" h="100%" style={{ display: 'flex', flexDirection: 'column' }}>
@@ -52,6 +67,7 @@ export const GeneTable = ({ isExpLoading, onVisibleIdsChange }: GeneTableProps) 
         <DataTable
           columns={columns}
           data={geneData}
+          idAccessor="ensembl"
           isLoading={isDataLoading || isExpLoading}
           onVisibleIdsChange={onVisibleIdsChange}
           mantinePaperProps={{
@@ -60,19 +76,7 @@ export const GeneTable = ({ isExpLoading, onVisibleIdsChange }: GeneTableProps) 
           mantineTableContainerProps={{
             style: { flex: 1, minHeight: 0 }
           }}
-          mantineTableBodyRowProps={({ row }) => {
-            const isSelected = row.original.ensembl === selectedGeneId;
-            return {
-              onClick: () => useUIStore.getState().setSelectedGeneId(row.original.ensembl),
-              style: {
-                cursor: 'pointer',
-                ...(isSelected ? {
-                  boxShadow: 'inset 0 0 0 2px var(--mantine-color-blue-filled)',
-                  backgroundColor: 'var(--mantine-color-blue-light)'
-                } : {})
-              },
-            };
-          }}
+          mantineTableBodyRowProps={getRowProps}
         />
       </Box>
       <Box p="xs" ta="center" bg="gray.0" style={{ borderTop: '1px solid var(--mantine-color-gray-3)' }}>

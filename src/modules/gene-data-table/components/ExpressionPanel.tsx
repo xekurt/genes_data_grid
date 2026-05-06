@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Group, Select, Tooltip, ActionIcon, Badge, Box, Divider } from '@mantine/core';
+import { Group, Select, Tooltip, ActionIcon, Badge, Box } from '@mantine/core';
 import { IconFlask, IconPlus, IconX } from '@tabler/icons-react';
-import { getAvailableTissues } from '../../../services/expressionApi';
-import { useExpressionStore } from '../../../store/useExpressionStore';
-import { useDomainStore } from '../../../store/useDomainStore';
-import type { TissueInfo } from '../../../types/tissue';
+import { getAvailableTissues } from '@/services/expressionApi';
+import { useExpressionStore } from '@/store/useExpressionStore';
+import { useDomainStore } from '@/store/useDomainStore';
+import type { TissueInfo } from '@/types/tissue';
 
 interface ExpressionPanelProps {
   isExpLoading: boolean;
