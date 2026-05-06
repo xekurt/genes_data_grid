@@ -13,7 +13,7 @@ import { useCSVParser } from '@/hooks/useCSVParser';
 import { ASSET_URLS } from '@/utils/url';
 
 export const GeneDataDashboard = () => {
-  const geneData = useDomainStore((state) => state.geneData);
+  const totalCount = useDomainStore((state) => state.totalCount);
   const addedTissues = useExpressionStore((state) => state.addedTissues);
 
   const { parse } = useCSVParser(ASSET_URLS.GENES_HUMAN);
@@ -21,11 +21,6 @@ export const GeneDataDashboard = () => {
   const [visibleIds, setVisibleIds] = useState<string[]>([]);
 
   const { isExpLoading, loadingTissueIds } = useJITExpression(visibleIds, addedTissues);
-  
-  useEffect(() => {
-    
-    parse();
-  }, [parse]);
 
   const handleVisibleIdsChange = useCallback((ids: string[]) => {
     setVisibleIds(ids);
@@ -35,17 +30,16 @@ export const GeneDataDashboard = () => {
 
   return (
     <Stack pb="lg" style={{ overflow: 'hidden', backgroundColor: 'var(--mantine-color-gray-0)'}}>
-      {geneData.length > 0 && (
+      {totalCount > 0 && (
         <Group>
           <ExpressionPanel isExpLoading={isExpLoading} />
         </Group>
       )}
 
-      {geneData.length > 0 && (
+      {totalCount > 0 && (
         <Grid style={{ flex: 1, minHeight: 0, overflow: 'hidden' }} gutter={8} columns={12}>
           <Grid.Col span={{ base: 12, md: 8 }} style={{ display: 'flex', flexDirection: 'column' }}>
             <GeneTable 
-              isExpLoading={isExpLoading} 
               loadingTissueIds={loadingTissueIds}
               onVisibleIdsChange={handleVisibleIdsChange} 
             />
