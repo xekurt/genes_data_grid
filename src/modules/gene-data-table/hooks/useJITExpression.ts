@@ -1,18 +1,22 @@
 import { useState, useEffect, useRef } from 'react';
-import { getExpressionByTissue } from '../../../services/expressionApi';
-import { useExpressionStore } from '../../../store/useExpressionStore';
-import type { TissueInfo } from '../../../types/tissue';
+import { notifications } from '@mantine/notifications';
+import { getExpressionByTissue } from '@/services/expressionApi';
+import { useExpressionStore } from '@/store/useExpressionStore';
+import type { TissueInfo } from '@/types/tissue';
+import { NO_EXPRESSION_DATA } from '@/constants/expression';
 
 export const useJITExpression = (visibleIds: string[], addedTissues: TissueInfo[]) => {
-  const [isExpLoading, setIsExpLoading] = useState(false);
+  const [activeRequests, setActiveRequests] = useState(0);
   const fetchingRef = useRef<Record<string, Set<string>>>({});
+  const isExpLoading = activeRequests > 0;
 
   useEffect(() => {
     if (addedTissues.length === 0 || visibleIds.length === 0) return;
 
+    const controller = new AbortController();
+
     const fetchMissingData = async () => {
       const tasks: { tissueId: string; missingIds: string[] }[] = [];
-      
       const currentExpressionMap = useExpressionStore.getState().expressionDataMap;
 
       addedTissues.forEach(tissue => {
@@ -36,11 +40,11 @@ export const useJITExpression = (visibleIds: string[], addedTissues: TissueInfo[
         missingIds.forEach(id => fetchingRef.current[tissueId].add(id));
       });
 
-      setIsExpLoading(true);
+      setActiveRequests(prev => prev + 1);
       try {
         const results = await Promise.all(
           tasks.map(async ({ tissueId, missingIds }) => {
-            const newData = await getExpressionByTissue(tissueId, missingIds);
+            const newData = await getExpressionByTissue(tissueId, missingIds, controller.signal);
             return { tissueId, missingIds, newData };
           })
         );
@@ -48,15 +52,22 @@ export const useJITExpression = (visibleIds: string[], addedTissues: TissueInfo[
         results.forEach(({ tissueId, missingIds, newData }) => {
           const updateMap: Record<string, number> = {};
           missingIds.forEach(id => {
-            updateMap[id] = newData[id] !== undefined ? newData[id] : -1;
+            updateMap[id] = newData[id] !== undefined ? newData[id] : NO_EXPRESSION_DATA;
           });
           
           useExpressionStore.getState().setExpressionData(tissueId, updateMap);
         });
       } catch (err) {
-        console.error('JIT Fetch failed:', err);
+        if ((err as Error).name !== 'AbortError') {
+          console.error('JIT Fetch failed:', err);
+          notifications.show({
+            title: 'Expression Fetch Failed',
+            message: 'Could not fetch data from GTEx API. Please try again later.',
+            color: 'red'
+          });
+        }
       } finally {
-        setIsExpLoading(false);
+        setActiveRequests(prev => Math.max(0, prev - 1));
         tasks.forEach(({ tissueId, missingIds }) => {
           missingIds.forEach(id => fetchingRef.current[tissueId]?.delete(id));
         });
@@ -64,6 +75,10 @@ export const useJITExpression = (visibleIds: string[], addedTissues: TissueInfo[
     };
 
     fetchMissingData();
+
+    return () => {
+      controller.abort();
+    };
   }, [visibleIds, addedTissues]);
 
   return { isExpLoading };
