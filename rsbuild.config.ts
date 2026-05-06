@@ -12,5 +12,18 @@ export default defineConfig({
   html: {
     title: 'GeneStream Parser',
   },
-  // Optional but recommended: Path aliases make importing components cleaner
+  
+  resolve: {
+    alias: {
+      '@': './src',
+      '@hooks': './src/hooks',
+      '@services': './src/services',
+      '@components': './src/components',
+      '@store': './src/store',
+      '@types': './src/types',
+      '@utils': './src/utils',
+      '@modules': './src/modules',
+      '@constants': './src/constants',
+    },
+  },
 });
