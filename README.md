@@ -1,6 +1,6 @@
 # 🧬 Gene Stream
 
-A high-performance, interactive genomic data visualization dashboard built with **React 18**, **Rsbuild (Rspack)**, and **Mantine 7**. Designed for handling large-scale genomic datasets with smooth virtualization and just-in-time data fetching.
+A high-performance, interactive genomic data visualization dashboard built with **React 18**, **Rsbuild (Rspack)**, and **Mantine 7**. Engineered for large-scale genomic datasets with smooth virtualization, architectural robustness, and just-in-time data fetching.
 
 ![Header](https://img.shields.io/badge/Bioinformatics-Data--Grid-blue?style=for-the-badge&logo=dna)
 ![React](https://img.shields.io/badge/React-18-blue?style=flat-square&logo=react)
@@ -11,12 +11,14 @@ A high-performance, interactive genomic data visualization dashboard built with 
 
 ## 🚀 Key Features
 
-- **⚡ Virtualized Data Grid**: Render tens of thousands of genes with zero lag using `mantine-react-table` and custom row virtualization.
-- **📥 JIT Expression Fetching**: Dynamically resolves and fetches median expression data from the **GTEx API** only for visible genes in the viewport.
-- **🗺️ Interactive Genomic Tracks**: High-fidelity gene annotation visualizations powered by **Gosling.js**.
-- **📊 Advanced Analytics**: Interactive violin and box plots for tissue-specific expression distribution using **Plotly.js**.
-- **🔗 URL State Persistence**: Seamlessly sync sorting, filtering, searching, and pagination states with the browser URL for easy sharing.
-- **🛡️ Robust Data Processing**: Schema-validated CSV parsing with `PapaParse` and optimized O(n) data orchestration.
+- **⚡ Virtualized Data Grid**: Render tens of thousands of genes with zero lag using `mantine-react-table` and custom row virtualization, optimized for high-density analytical work.
+- **📥 JIT Expression Fetching**: Intelligent data orchestration that dynamically fetches median expression data from the **GTEx API** only for genes currently visible in the viewport.
+- **📊 Advanced Genomic Analytics**: 
+    - **Interactive Tracks**: High-fidelity gene annotation visualizations powered by **Gosling.js** using custom composite tracks.
+    - **Distribution Plots**: Interactive Plotly-based violin and box plots for tissue-specific expression analysis.
+- **🔗 URL State Persistence**: Seamlessly sync sorting, filtering, searching, and pagination states with the browser URL for persistent sessions and easy sharing.
+- **🛡️ Robust Data Validation**: Strict schema-validated CSV parsing with `PapaParse` and O(n) data orchestration to ensure genomic data integrity.
+- **🧠 Multi-Store State Management**: Scalable architecture using **Zustand** with specialized stores (Domain, UI, Cache, Expression) for predictable data flow.
 
 ---
 
@@ -24,10 +26,10 @@ A high-performance, interactive genomic data visualization dashboard built with 
 
 - **Framework**: [Rsbuild](https://rsbuild.rs/) (Next-gen build tool powered by Rspack)
 - **UI Components**: [Mantine UI v7](https://mantine.dev/)
-- **State Management**: [Zustand](https://zustand-demo.pmnd.rs/)
+- **State Management**: [Zustand v5](https://zustand-demo.pmnd.rs/)
 - **Table Engine**: [Mantine React Table](https://www.mantine-react-table.com/)
 - **Visualization**: [Gosling.js](https://gosling-lang.org/), [Plotly.js](https://plotly.com/javascript/)
-- **Data Handling**: [PapaParse](https://www.papaparse.com/)
+- **Data Handling**: [PapaParse](https://www.papaparse.com/), [Lodash](https://lodash.com/)
 
 ---
 
@@ -76,25 +78,37 @@ npm run preview
 
 ```text
 src/
-├── components/     # Generic reusable components (DataTable, URL hooks)
-├── constants/      # App-wide constants and configurations
-├── hooks/          # Shared custom hooks (CSV parsing, window size)
-├── modules/        # Feature-scoped modules
-│   ├── gene-data-table/   # The main grid and expression panels
-│   └── gene-detail/       # Genomic tracks and distribution plots
-├── services/       # API services (GTEx, Gosling spec generation)
-├── store/          # Zustand global stores (Domain, UI, Cache)
-├── types/          # TypeScript definitions
-└── utils/          # Helper utilities (Validation, formatting)
+├── components/         # Generic reusable components (DataTable, URL hooks)
+├── constants/          # App-wide constants and GTEx configurations
+├── hooks/              # Shared custom hooks (CSV parsing, lifecycle)
+├── modules/            # Feature-scoped modules
+│   └── gene-dashboard/ # Central application orchestrator
+│       ├── components/ # Dashboard-specific UI (Table, Expression panels)
+│       │   └── gene-detail/ # Detailed view with Gosling & Plotly
+│       └── hooks/      # Module-specific logic
+├── services/           # API services (GTEx fetching, Gosling spec generation)
+├── store/              # Specialized Zustand stores (Domain, UI, Cache, Expression)
+├── types/              # Strict TypeScript definitions
+└── utils/              # Helper utilities (Validation, Coordinate formatting)
 ```
+
+---
+
+## 🛡️ Quality & Performance
+
+This project adheres to senior-principal engineering standards:
+- **Performance**: Virtualized rendering and debounced API calls to minimize main-thread blocking.
+- **Type Safety**: Strict TypeScript configuration with exhaustive type checking for genomic records.
+- **Validation**: Early-exit validation patterns for large CSV imports to detect malformed data without performance hits.
 
 ---
 
 ## 🤝 Contributing
 
-This project uses **Strict TypeScript** and **ESLint**. Please ensure all checks pass before submitting a PR:
+Ensure all linting and type checks pass before submitting a PR:
 
 ```bash
 npm run lint
+npm run format
 npx tsc --noEmit
 ```
