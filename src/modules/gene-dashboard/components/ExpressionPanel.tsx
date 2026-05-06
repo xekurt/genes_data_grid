@@ -12,7 +12,7 @@ interface ExpressionPanelProps {
 
 export const ExpressionPanel = ({ isExpLoading }: ExpressionPanelProps) => {
   const addedTissues = useExpressionStore((state) => state.addedTissues);
-  const geneDataLength = useDomainStore((state) => state.geneData.length);
+  const totalCount = useDomainStore((state) => state.totalCount);
   const [availableTissues, setAvailableTissues] = useState<TissueInfo[]>([]);
   const [selectedTissue, setSelectedTissue] = useState<string | null>(null);
 
@@ -21,12 +21,12 @@ export const ExpressionPanel = ({ isExpLoading }: ExpressionPanelProps) => {
   }, []);
 
   const handleAddExpression = useCallback(async () => {
-    if (!selectedTissue || geneDataLength === 0) return;
+    if (!selectedTissue || totalCount === 0) return;
     const tissue = availableTissues.find((t) => t.tissueSiteDetailId === selectedTissue);
     if (!tissue || addedTissues.some((t) => t.tissueSiteDetailId === selectedTissue)) return;
     useExpressionStore.getState().addTissue(tissue);
     setSelectedTissue(null);
-  }, [selectedTissue, geneDataLength, availableTissues, addedTissues]);
+  }, [selectedTissue, totalCount, availableTissues, addedTissues]);
 
   const handleRemoveTissue = useCallback((tissueId: string) => {
     useExpressionStore.getState().removeTissue(tissueId);
