@@ -6,9 +6,9 @@ import type { TissueInfo } from '@/types/tissue';
 import { NO_EXPRESSION_DATA } from '@/constants/expression';
 
 export const useJITExpression = (visibleIds: string[], addedTissues: TissueInfo[]) => {
-  const [activeRequests, setActiveRequests] = useState(0);
+  const [loadingTissueIds, setLoadingTissueIds] = useState<Set<string>>(new Set());
   const fetchingRef = useRef<Record<string, Set<string>>>({});
-  const isExpLoading = activeRequests > 0;
+  const isExpLoading = loadingTissueIds.size > 0;
 
   useEffect(() => {
     if (addedTissues.length === 0 || visibleIds.length === 0) return;
@@ -35,12 +35,18 @@ export const useJITExpression = (visibleIds: string[], addedTissues: TissueInfo[
 
       if (tasks.length === 0) return;
 
+      const taskTissueIds = tasks.map(t => t.tissueId);
+      setLoadingTissueIds(prev => {
+        const next = new Set(prev);
+        taskTissueIds.forEach(id => next.add(id));
+        return next;
+      });
+
       tasks.forEach(({ tissueId, missingIds }) => {
         if (!fetchingRef.current[tissueId]) fetchingRef.current[tissueId] = new Set();
         missingIds.forEach(id => fetchingRef.current[tissueId].add(id));
       });
 
-      setActiveRequests(prev => prev + 1);
       try {
         const results = await Promise.all(
           tasks.map(async ({ tissueId, missingIds }) => {
@@ -67,7 +73,11 @@ export const useJITExpression = (visibleIds: string[], addedTissues: TissueInfo[
           });
         }
       } finally {
-        setActiveRequests(prev => Math.max(0, prev - 1));
+        setLoadingTissueIds(prev => {
+          const next = new Set(prev);
+          taskTissueIds.forEach(id => next.delete(id));
+          return next;
+        });
         tasks.forEach(({ tissueId, missingIds }) => {
           missingIds.forEach(id => fetchingRef.current[tissueId]?.delete(id));
         });
@@ -81,5 +91,5 @@ export const useJITExpression = (visibleIds: string[], addedTissues: TissueInfo[
     };
   }, [visibleIds, addedTissues]);
 
-  return { isExpLoading };
+  return { isExpLoading, loadingTissueIds };
 };
