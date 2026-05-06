@@ -2,20 +2,19 @@ import { create } from 'zustand';
 import type { GeneRecord } from '../types/csv';
 
 interface DomainState {
-  geneData: GeneRecord[];
-  geneMap: Map<string, GeneRecord>;
+  viewData: GeneRecord[];
+  totalCount: number;
   isDataLoading: boolean;
-  setGeneData: (data: GeneRecord[]) => void;
+  setViewData: (data: GeneRecord[]) => void;
+  setTotalCount: (count: number) => void;
   setIsDataLoading: (isLoading: boolean) => void;
 }
 
 export const useDomainStore = create<DomainState>((set) => ({
-  geneData: [],
-  geneMap: new Map(),
+  viewData: [],
+  totalCount: 0,
   isDataLoading: false,
-  setGeneData: (data) => set({ 
-    geneData: data,
-    geneMap: new Map(data.map(g => [g.ensembl, g]))
-  }),
+  setViewData: (data) => set({ viewData: data }),
+  setTotalCount: (count) => set({ totalCount: count }),
   setIsDataLoading: (isLoading) => set({ isDataLoading: isLoading }),
 }));
