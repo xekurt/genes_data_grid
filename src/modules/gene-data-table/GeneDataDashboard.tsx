@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
-import { GeneDetailView } from '../gene-detail/GeneDetailView';
+import { Grid, Group, Stack } from '@mantine/core';
+import { useJITExpression } from './hooks/useJITExpression';
 import { ExpressionPanel } from './components/ExpressionPanel';
 import { GeneTable } from './components/GeneTable';
-import { Grid, Group, Stack } from '@mantine/core';
-import { useDomainStore } from '../../store/useDomainStore';
-import { useExpressionStore } from '../../store/useExpressionStore';
-import { useCSVParser } from '../../hooks/useCSVParser';
-import { useJITExpression } from './hooks/useJITExpression';
-import { ASSET_URLS } from '../../utils/url';
+import { GeneDetailView } from '@/modules/gene-detail/GeneDetailView';
+import { useDomainStore } from '@/store/useDomainStore';
+import { useExpressionStore } from '@/store/useExpressionStore';
+import { useCSVParser } from '@/hooks/useCSVParser';
+import { ASSET_URLS } from '@/utils/url';
 
 export const GeneDataDashboard = () => {
   const geneData = useDomainStore((state) => state.geneData);
@@ -20,12 +20,15 @@ export const GeneDataDashboard = () => {
   const { isExpLoading } = useJITExpression(visibleIds, addedTissues);
   
   useEffect(() => {
+    
     parse();
   }, [parse]);
 
   const handleVisibleIdsChange = useCallback((ids: string[]) => {
     setVisibleIds(ids);
   }, []);
+
+  
 
   return (
     <Stack pb="lg" style={{ overflow: 'hidden', backgroundColor: 'var(--mantine-color-gray-0)'}}>
