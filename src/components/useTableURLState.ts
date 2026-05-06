@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import debounce from 'lodash/debounce';
 import type {
   MRT_SortingState,
@@ -84,16 +84,28 @@ export const useTableURLState = () => {
       const newUrl = `${window.location.pathname}${
         newSearch ? '?' + newSearch : ''
       }`;
-      window.history.pushState({}, '', newUrl);
+      window.history.replaceState({}, '', newUrl);
     }
   }, [sorting, columnFilters, globalFilter, columnVisibility, pagination]);
-  const debouncedUpdateURL = useMemo(
-    () => debounce(updateURL, 500),
-    [updateURL],
+
+  const updateURLRef = useRef(updateURL);
+  useEffect(() => {
+    updateURLRef.current = updateURL;
+  }, [updateURL]);
+
+  const debouncedExecutor = useMemo(
+    () => debounce((fn: () => void) => fn(), 500),
+    [],
   );
+
+  useEffect(() => {
+    debouncedExecutor(updateURL);
+    return () => debouncedExecutor.cancel();
+  }, [debouncedExecutor, updateURL]);
+
   useEffect(() => {
     const handlePopState = () => {
-      debouncedUpdateURL.cancel(); // Fix race condition
+      debouncedExecutor.cancel();
       const params = new URLSearchParams(window.location.search);
 
       const s = parseJSON(params.get('sorting'));
@@ -113,15 +125,11 @@ export const useTableURLState = () => {
     };
 
     window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, [debouncedUpdateURL]);
-
- 
-  
-  useEffect(() => {
-    debouncedUpdateURL();
-    return () => debouncedUpdateURL.cancel();
-  }, [debouncedUpdateURL]);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      debouncedExecutor.cancel();
+    };
+  }, [debouncedExecutor]);
 
   return {
     sorting,
