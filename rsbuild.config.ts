@@ -12,6 +12,9 @@ export default defineConfig({
   html: {
     title: 'GeneStream Parser',
   },
+  output: {
+    assetPrefix: process.env.NODE_ENV === 'production' ? '/genes_data_grid/' : '/',
+  },
   
   resolve: {
     alias: {
