@@ -1,11 +1,14 @@
-import { Title, Text, Group, Badge, Divider, Grid } from '@mantine/core';
+import { Title, Text, Group, Badge, Divider, Grid, ActionIcon, Tooltip } from '@mantine/core';
+import { IconMaximize, IconMinimize } from '@tabler/icons-react';
 import type { GeneRecord } from '@/types/csv';
 
 interface GeneDetailHeaderProps {
   gene: GeneRecord;
+  isFullscreen?: boolean;
+  toggleFullscreen?: () => void;
 }
 
-export const GeneDetailHeader = ({ gene }: GeneDetailHeaderProps) => {
+export const GeneDetailHeader = ({ gene, isFullscreen, toggleFullscreen }: GeneDetailHeaderProps) => {
   const formatPos = (val: number | undefined | null) => {
     if (val === undefined || val === null) return '-';
     return typeof val === 'number' ? val.toLocaleString() : val;
@@ -13,12 +16,21 @@ export const GeneDetailHeader = ({ gene }: GeneDetailHeaderProps) => {
 
   return (
     <>
-      <Group justify="space-between" align="flex-start">
-        <div>
-          <Title order={3}>{gene.gene_symbol || gene.ensembl}</Title>
-          <Text c="dimmed" size="sm" maw={300} truncate="end">{gene.name}</Text>
+      <Group justify="space-between" align="flex-start" wrap="nowrap">
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <Text component="h3" size="lg" fw={700} truncate="end" style={{ margin: 0 }}>
+            {gene.gene_symbol || gene.ensembl}
+          </Text>
+          <Text c="dimmed" size="sm" maw="100%" truncate="end">{gene.name}</Text>
         </div>
-        <Badge color="indigo" variant="light" size="lg">{gene.biotype}</Badge>
+        <Group gap="xs" wrap="nowrap">
+          <Badge color="indigo" variant="light" size="lg">{gene.biotype}</Badge>
+          <Tooltip label={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}>
+            <ActionIcon variant="light" color="gray" onClick={toggleFullscreen} size="lg">
+              {isFullscreen ? <IconMinimize size={18} /> : <IconMaximize size={18} />}
+            </ActionIcon>
+          </Tooltip>
+        </Group>
       </Group>
 
       <Divider />

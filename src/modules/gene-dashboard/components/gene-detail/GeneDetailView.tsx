@@ -1,4 +1,5 @@
 import { Paper, Text, Stack, Tabs } from '@mantine/core';
+import { useFullscreen } from '@mantine/hooks';
 import { IconChartBar, IconDna } from '@tabler/icons-react';
 
 import { useUIStore } from '@/store/useUIStore';
@@ -12,6 +13,7 @@ export const GeneDetailView = () => {
   const gene = useDomainStore((state) => 
     selectedGeneId ? state.geneMap.get(selectedGeneId) : null
   );
+  const { ref, toggle, fullscreen } = useFullscreen();
 
   if (!gene) {
     return (
@@ -22,10 +24,27 @@ export const GeneDetailView = () => {
   }
 
   return (
-    <Paper withBorder radius="sm" p="xs" shadow="xs" h="100%" style={{ display: 'flex', flexDirection: 'column', borderRadius: 'none' }}>
+    <Paper 
+      ref={ref}
+      withBorder 
+      radius="sm" 
+      p="xs" 
+      shadow="xs" 
+      h="100%" 
+      style={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        borderRadius: 'none',
+        backgroundColor: fullscreen ? 'white' : undefined 
+      }}
+    >
       <Stack gap="xs" style={{ flex: 1, minHeight: 0 }}>
         
-        <GeneDetailHeader gene={gene} />
+        <GeneDetailHeader 
+          gene={gene} 
+          isFullscreen={fullscreen} 
+          toggleFullscreen={toggle} 
+        />
 
         <Tabs defaultValue="expression" keepMounted={false} style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }} mt="0">
           <Tabs.List>
