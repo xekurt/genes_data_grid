@@ -1,4 +1,4 @@
-import { Badge, Text, Group, Box, Stack } from '@mantine/core';
+import { Badge, Text, Group, Box, Stack, Loader } from '@mantine/core';
 import type { MRT_ColumnDef } from 'mantine-react-table';
 import type { GeneRecord } from '@/types/csv';
 import { getCategoryColor } from '@/utils/color';
@@ -11,6 +11,7 @@ export const getGeneColumns = (
     chromCounts: Record<string, number>;
   },
   dynamicColumns: { id: string; label: string; color?: string }[] = [],
+  loadingTissueIds: Set<string> = new Set()
 ): MRT_ColumnDef<GeneRecord>[] => [
   {
     accessorKey: 'ensembl',
@@ -108,19 +109,28 @@ export const getGeneColumns = (
     size: 150,
     Header: () => (
       <Group gap="xs" wrap="nowrap">
-        <Box
-          w={10}
-          h={10}
-          bg={`#${col.color || 'blue'}`}
-          style={{ borderRadius: '50%' }}
-        />
+        {loadingTissueIds.has(col.id) ? (
+          <Loader size={10} color="blue" />
+        ) : (
+          <Box
+            w={10}
+            h={10}
+            bg={`#${col.color || 'blue'}`}
+            style={{ borderRadius: '50%' }}
+          />
+        )}
         <Text size="xs" fw={700}>
           {col.label}
         </Text>
       </Group>
     ),
     Cell: ({ row }) => (
-      <ExpressionCell ensemblId={row.original.ensembl} tissueId={col.id} color={col.color} />
+      <ExpressionCell 
+        ensemblId={row.original.ensembl} 
+        tissueId={col.id} 
+        color={col.color} 
+        isLoading={loadingTissueIds.has(col.id)} 
+      />
     ),
   } as MRT_ColumnDef<GeneRecord>)),
 ];
