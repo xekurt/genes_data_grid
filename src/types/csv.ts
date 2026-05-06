@@ -5,7 +5,7 @@ export type GeneRecord = {
   gene_symbol: string;
   name: string;
   biotype: string;
-  chromosome: string;
+  chromosome: number;
   seq_region_start: number;
   seq_region_end: number;
 };
